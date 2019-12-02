@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+{
+    strings -a -td "$@"
+    strings -a -td -el "$@"
+    strings -a -td -eL "$@"
+    strings -a -td -eb "$@"
+    strings -a -td -eB "$@"
+} | sort -n
+
+

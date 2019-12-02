@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+#DEBUG=1
+
+ BLACK='\e[0;30m'
+   RED='\e[0;31m'
+ GREEN='\e[0;32m'
+YELLOW='\e[0;33m'
+  BLUE='\e[0;34m'
+PURPLE='\e[0;35m'
+  CYAN='\e[0;36m'
+ WHITE='\e[0;37m'
+    NC='\e[0m'
+
+
+timeout=$1
+cond=$2
+
+if [[ -z $timeout ]] || [[ -z $cond ]]; then
+    >&2 echo "usage: $(basename "$0") <timeout> <cond>"
+    exit 1
+fi
+
+echo -en "wait (${YELLOW}$cond${NC}) "
+
+n=0
+while [[ $n -lt $timeout ]] && ! eval "$cond"
+do
+    ((n+=1))
+    ( [[ $((n % 10)) -eq 0 ]] && printf '%d' $n ) || \
+    ( [[ $((n %  5)) -eq 0 ]] && printf '*' ) || \
+                                 printf '.'
+
+    sleep 1s
+done
+
+
+printf "\n"
