@@ -1,38 +1,138 @@
 #!/usr/bin/env bash
 
-#DEBUG=1
-
- BLACK='\e[0;30m'
-   RED='\e[0;31m'
- GREEN='\e[0;32m'
-YELLOW='\e[0;33m'
-  BLUE='\e[0;34m'
-PURPLE='\e[0;35m'
-  CYAN='\e[0;36m'
- WHITE='\e[0;37m'
+if [[ -t 1 ]]; then
+    BLACK='\e[0;30m'
+    RED='\e[0;31m'
+    GREEN='\e[0;32m'
+    YELLOW='\e[0;33m'
+    BLUE='\e[0;34m'
+    PURPLE='\e[0;35m'
+    CYAN='\e[0;36m'
+    WHITE='\e[0;37m'
     NC='\e[0m'
-
-
-timeout=$1
-cond=$2
-
-if [[ -z $timeout ]] || [[ -z $cond ]]; then
-    >&2 echo "usage: $(basename "$0") <timeout> <cond>"
-    exit 1
 fi
 
-echo -en "wait (${YELLOW}$cond${NC}) "
+INF=-1
+RC=0
+IS_WAIT_BEEP=
+DONE_BEEP=0
+TIMEOUT=$INF
+COND=
+VERBOSE=0
 
-n=0
-while [[ $n -lt $timeout ]] && ! eval "$cond"
+function print_help {
+    progname="$(basename "$0")"
+    cat > /dev/stderr << EOF
+$progname [-t <timeout>] [-b] [-B] [-h] [-v] <condition-cmd>
+
+REQUIRED ARGS:
+<conditoin-cmd> The command evaluated to check if the condition successes (return 0).
+
+OPTIONAL ARGS:
+-b beep when done (success or timeout)
+-p beep period when done (work with -b)
+-B beep when wait
+-t timeout
+-v verbose
+-h print the hlep
+
+EXAMPLES
+
+- wait ES startup, timeout 5min
+    $progname -t300 "curl -sIk localhost:9200 | grep -q 'HTTP/1.1 200 OK'"
+
+- beep in 5:30PM
+    $progname -b "date '+%T' | grep -q '17:30:'"
+
+- beep till 5:30PM
+    $progname -B "date '+%T' | grep -q '17:30:'"
+
+- beep in 5:30PM, duration 10sec
+    $progname -bp10 "date '+%T' | grep -q '17:30:'"
+
+EOF
+}
+
+while getopts "bp:Bt:vh" opt
 do
-    ((n+=1))
-    ( [[ $((n % 10)) -eq 0 ]] && printf '%d' $n ) || \
-    ( [[ $((n %  5)) -eq 0 ]] && printf '*' ) || \
-                                 printf '.'
-
-    sleep 1s
+    case "$opt" in
+    b) DONE_BEEP=-1 ;;
+    p) [[ -n $DONE_BEEP ]] && DONE_BEEP=$OPTARG ;;
+    B) IS_WAIT_BEEP=1 ;;
+    t) TIMEOUT=$OPTARG ;;
+    v) ((VERBOSE+=1)) ;;
+    h) print_help ;;
+    esac
 done
+shift "$((OPTIND-1))"
 
+COND=$1
+shift
 
-printf "\n"
+if [[ $VERBOSE -gt 0 ]]; then
+    echo DONE_BEEP="$DONE_BEEP"
+    echo IS_WAIT_BEEP="$IS_WAIT_BEEP"
+    echo TIMEOUT="$TIMEOUT"
+    echo VERBOSE="$VERBOSE"
+    echo COND="$COND"
+fi
+
+if [[ -z $COND ]] || [[ $# -gt 0 ]]; then
+    print_help
+    exit 255
+fi
+
+function beep {
+    paplay "/usr/share/sounds/ubuntu/stereo/button-toggle-on.ogg"
+}
+
+function is_timein {
+    cur=$1
+    max=$2
+    if [[ $max -eq $INF ]] || [[ $cur -lt $max ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function wait_cond {
+    echo -en "wait (${YELLOW}$COND${NC}) "
+
+    n=0
+    while is_timein $n "$TIMEOUT" && ! eval "$COND"
+    do
+        ((n+=1))
+        ( [[ $((n % 10)) -eq 0 ]] && printf '%d' $n ) || \
+            ( [[ $((n %  5)) -eq 0 ]] && printf '*' ) || \
+            printf '.'
+
+        [[ $IS_WAIT_BEEP ]] && beep
+        sleep 1s
+    done
+    printf "\n"
+
+    eval "$COND" && RC=0 || RC=1
+}
+
+function print_result {
+    if [[ $RC -eq 0 ]]; then
+        echo -e ">>> ${GREEN}DONE${NC} <<<"
+    else
+        echo -e ">>> ${RED}TIMEOUT${NC} <<<"
+    fi
+}
+
+function sound_result {
+    n=0
+    while is_timein $n "$DONE_BEEP"; do
+        beep && sleep 1s
+        ((n+=1))
+    done
+}
+
+wait_cond
+print_result
+sound_result
+
+exit $RC
