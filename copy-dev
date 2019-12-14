@@ -1,0 +1,38 @@
+#!/bin/bash
+
+if ! uname -a | grep -q Darwin; then
+    echo "Only for MAC"
+    exit 1
+fi    
+
+eject=1
+
+cmd=$1
+disk=$2
+img=$3
+if [ -z "$cmd" ] || [ -z "$disk" ] || [ -z "$img" ]; then
+    echo "usage: copy-dev backup diskN NAME.gz"
+    echo "usage: copy-dev restore diskN NAME.gz"
+    exit 1
+fi
+
+dev="/dev/$disk"
+rdev="/dev/r$disk"
+sz=$(diskutil info "$dev" | grep 'Disk Size' | sed  's/.*(\([0-9][0-9]*\) Bytes).*/\1/')
+
+
+if [ "$cmd" == "backup" ]; then
+    set -x
+    sudo true && sudo dd if="$rdev" bs=1m | pv -s "$sz" | gzip > "$img"
+    test "$eject" = 1 && diskutil eject "$dev"
+
+elif [ "$cmd" == "restore" ]; then
+    set -x
+    diskutil unmountDisk "$dev"
+    sudo true && gzip -dc "$img" | pv -s "$sz" | sudo dd of="$rdev" bs=1m
+    test "$eject" = 1 && diskutil eject "$dev"
+
+else
+    echo "bad cmd $cmd"
+    exit 3
+fi

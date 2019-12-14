@@ -1,0 +1,46 @@
+#!/bin/bash
+
+if ! uname -a | grep -q Darwin; then
+    echo "Only for MAC"
+    exit 1
+fi    
+
+# find if a NTFS device is mounted
+find_ntfs_device() {
+    if mnt=$(mount | grep ntfs); then
+        device=$(echo $mnt | cut -d' ' -f1)
+        mntdir=$(echo $mnt | cut -d' ' -f3)
+        return "0"
+    fi
+    return "1"
+}
+
+set -x
+
+# device specified
+device=$1
+if [[ ! -z "$device" ]]; then
+    # umount if need
+    if mount | grep "$device" > /dev/null; then
+        sudo umount $device
+    fi
+# device found
+elif find_ntfs_device; then
+    read -p "re-mount device $device($mntdir)? " -n 1 -r
+    echo    # (optional) move to a new line
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+    sudo umount $device
+# no device
+else
+    echo "No device specified or NTFS device found."
+    exit 1
+fi
+
+
+# mount as rw
+mntdir=~/USBDrive
+mkdir -p $mntdir
+sudo mount  -o rw,nobrowse -t ntfs "$device" "$mntdir"
+

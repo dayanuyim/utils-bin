@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+for a in 0 1 4 5 7
+do
+    echo "a=$a "
+    for (( f=30; f<=39; f++ ))
+    do
+        for (( b=40; b<=49; b++ ))
+        do
+            echo -ne "\\033[${a};${f};${b}m"
+            echo -ne "\\\\\\\\033[${a};${f};${b}m"
+            echo -ne "\\033[0m "
+        done
+        echo
+    done
+    echo
+done
+echo

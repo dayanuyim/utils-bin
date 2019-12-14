@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+if uname -a | grep -q Darwin; then
+    lsof -n -iTCP -sTCP:LISTEN
+else
+    netstat -tlunp
+fi

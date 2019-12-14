@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+video=$1
+audio=$2
+
+if [ -z "$video" ] || [ -z "$audio" ]; then
+    echo "usage: $0 <video> <audio>"
+    exit 1
+fi
+
+input="$(basename -- "$video")"
+ext="${input##*.}"
+filename="${input%.*}"
+output="$filename.output.$ext"
+
+set -x
+ffmpeg -loglevel error -i "$audio" -i "$video" -acodec copy -vcodec copy "$output"

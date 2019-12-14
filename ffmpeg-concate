@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# https://trac.ffmpeg.org/wiki/Concatenate
+
+listfile=$1
+outfile=$2
+
+set -x
+ffmpeg -f concat -safe 0 -i "$listfile" -c copy "$outfile"
+
