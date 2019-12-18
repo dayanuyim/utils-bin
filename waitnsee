@@ -82,7 +82,7 @@ if [[ -z $COND ]] || [[ $# -gt 0 ]]; then
     exit 255
 fi
 
-function beep {
+function beep_alt {
     paplay "/usr/share/sounds/ubuntu/stereo/button-toggle-on.ogg"
 }
 
