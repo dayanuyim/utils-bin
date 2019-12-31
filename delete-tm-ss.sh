@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if ! uname -a | grep -q Darwin; then
     echo "Only for MAC"
@@ -7,7 +7,7 @@ fi
 
 # Delete TimeMachine Snapshots
 
-for t in `tmutil listlocalsnapshots / | cut -d"." -f4`
+for t in $(tmutil listlocalsnapshots / | cut -d"." -f4)
 do
-    tmutil deletelocalsnapshots $t
+    tmutil deletelocalsnapshots "$t"
 done
