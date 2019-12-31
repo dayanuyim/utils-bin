@@ -7,30 +7,41 @@ fi
 
 eject=1
 
+function check_device {
+    if [[ ! -e $1 ]]; then
+        echo "error: device $1 does not exist"
+        exit 2
+    fi
+}
+
+
 cmd=$1
 disk=$2
 img=$3
-if [ -z "$cmd" ] || [ -z "$disk" ] || [ -z "$img" ]; then
-    echo "usage: copy-dev backup diskN NAME.gz"
-    echo "usage: copy-dev restore diskN NAME.gz"
+if [[ -z "$cmd" || -z "$disk" || -z "$img" ]]; then
+    echo "usage: $(basename "$0") backup diskN NAME.gz"
+    echo "usage: $(basename "$0") restore diskN NAME.gz"
     exit 1
 fi
 
 dev="/dev/$disk"
 rdev="/dev/r$disk"
+check_device "$dev"
+check_device "$rdev"
+
 sz=$(diskutil info "$dev" | grep 'Disk Size' | sed  's/.*(\([0-9][0-9]*\) Bytes).*/\1/')
 
 
-if [ "$cmd" == "backup" ]; then
+if [[ "$cmd" == "backup" ]]; then
     set -x
     sudo true && sudo dd if="$rdev" bs=1m | pv -s "$sz" | gzip > "$img"
-    test "$eject" = 1 && diskutil eject "$dev"
+    [[ -n $eject ]] && diskutil eject "$dev"
 
 elif [ "$cmd" == "restore" ]; then
     set -x
     diskutil unmountDisk "$dev"
     sudo true && gzip -dc "$img" | pv -s "$sz" | sudo dd of="$rdev" bs=1m
-    test "$eject" = 1 && diskutil eject "$dev"
+    [[ -n $eject ]] && diskutil eject "$dev"
 
 else
     echo "bad cmd $cmd"
