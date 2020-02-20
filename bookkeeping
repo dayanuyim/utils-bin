@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+DIR="$(realpath "$0" | xargs dirname)"
+BK="$DIR/bookkeeping.csv"
+AWK_SCRIPT="$DIR/bookkeeping.awk"
+
+function list {
+    [[ -n $1 ]] && filter="$1" || filter="^$(date '+%Y-%m')"
+    grep --color=always -e "$filter" "$BK" |
+        awk -F ',' -f "$AWK_SCRIPT"
+}
+
+cmd="$1"
+args="$2"
+
+if [[ $cmd == edit ]]; then
+    vim "$BK"
+elif [[ $cmd == list ]]; then
+    list "$2"
+else
+    echo "usage: $(basename "$0") <edit|list> [args]"
+    exit 1
+fi
+
