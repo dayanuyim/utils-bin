@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 
+if uname -a | grep -q Darwin; then
+    strings="gstrings"
+else
+    strings="strings"
+fi
+
 {
-    strings -a -td "$@"
-    strings -a -td -el "$@"
-    strings -a -td -eL "$@"
-    strings -a -td -eb "$@"
-    strings -a -td -eB "$@"
+    $strings -a -td "$@"
+    $strings -a -td -el "$@"
+    $strings -a -td -eL "$@"
+    $strings -a -td -eb "$@"
+    $strings -a -td -eB "$@"
 } | sort -n
 
 
