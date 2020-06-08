@@ -10,15 +10,15 @@ function list {
         awk -F ',' -f "$AWK_SCRIPT"
 }
 
-cmd="$1"
-args="$2"
+cmd="${1:-list}"
+shift
 
 if [[ $cmd == edit ]]; then
     vim "$BK"
 elif [[ $cmd == list ]]; then
-    list "$2"
+    list "$@"
 else
-    echo "usage: $(basename "$0") <edit|list> [args]"
+    echo "usage: ${0##*/} <edit|list> [args]"
     exit 1
 fi
 
