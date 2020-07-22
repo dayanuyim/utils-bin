@@ -14,11 +14,12 @@ cmd="${1:-list}"
 shift
 
 if [[ $cmd == edit ]]; then
-    vim "$BK"
+    vim + "$BK"
 elif [[ $cmd == list ]]; then
     list "$@"
 else
-    echo "usage: ${0##*/} <edit|list> [args]"
+    echo "usage: ${0##*/} edit"
+    echo "usage: ${0##*/} list [grep-regex]"
     exit 1
 fi
 
