@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+
+inc="$1"
+if [[ -z "$inc" ]]; then
+    >&2 echo "usage: ${0##*/} <inc> [file1..fileN]"
+    exit 1
+fi
+shift
+
+for f in "$@"; do
+    fname="${f%.*}"
+    ext="${f:${#fname}}"
+    prefix="${fname%%[0-9][0-9]*}"
+    sn="${fname:${#prefix}}"
+
+    new_sn=$((10#$sn + 10#$inc))            # enfore decimal even leading zero
+    new_sn=$(printf "%0*d" ${#sn} $new_sn)  # padding leading zero if shortened
+
+    new_f="$prefix$new_sn$ext"
+
+    echo "[+] mv $f $new_f"
+    mv "$f" "$new_f"
+done
+
+
+
+
