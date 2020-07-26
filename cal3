@@ -2,29 +2,36 @@
 
 cat << EOF
 cal -3 with the specified date
-usage: $(basename $0) [[[year] month] day]
+usage: ${0##*/} [[[year] month] day]
 
 EOF
 
+
+if uname -a | grep -q Darwin; then
+    CAL="cal -3"
+else
+    CAL="ncal -b -3"
+fi
+
 case "$#" in
     0) 
-       cal -3
+       $CAL
        ;;
     1)
         ym="$(date '+%Y-%m')"
         d="$1"
-        cal -3 -H "$ym-$d" -d "$ym"
+        $CAL -H "$ym-$d" -d "$ym"
         ;;
     2)
         y="$(date '+%Y')"
-        m="$(printf '%02d' $1)"
+        m="$(printf '%02s' "$1")"
         d="$2"
-        cal -3 -H "$y-$m-$d" -d "$y-$m"
+        $CAL -H "$y-$m-$d" -d "$y-$m"
         ;;
     *)
-        y="$(printf '%04d' $1)"
-        m="$(printf '%02d' $2)"
+        y="$(printf '%04s' "$1")"
+        m="$(printf '%02s' "$2")"
         d="$3"
         shift 3
-        cal -3 -H "$y-$m-$d" -d "$y-$m" "$@"
+        $CAL -H "$y-$m-$d" -d "$y-$m" "$@"
 esac
