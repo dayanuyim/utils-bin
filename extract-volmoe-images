@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Remove /./ and dir/.. sequences from a pathname and write result to stdout.
+function normalize_path {
+    # Remove all /./ sequences.
+    local   path=${1//\/.\//\/}
+
+    # Remove dir/.. sequences.
+    while [[ $path =~ ([^/][^/]*/\.\./) ]]
+    do
+        path=${path/${BASH_REMATCH[0]}/}
+    done
+    echo $path
+}
+
+# extract the image refered by the html
+function rename_html_img {
+    html="$1"
+
+    html_dir="$(dirname "$html")"
+
+    html_base="${html##*/}"
+    html_base="${html_base%.*}"
+
+    img="$(grep '<img ' "$html" | sed 's/.*src="\(.*\)" alt.*/\1/')"
+    img="$(normalize_path "$html_dir/$img")"
+    img_ext="${img##*.}"
+    img_dir="$(dirname "$img")"
+
+    new_img="$img_dir/$html_base.$img_ext"
+
+    echo mv "$img" "$new_img"
+    mv "$img" "$new_img"
+}
+
+ebook="$1"
+if [[ -z "$ebook" ]]; then
+    >&2 echo "usage: ${0##*/} <ebook-file> [target-dir]" 
+    exit 1
+fi
+
+target="$2"
+if [[ -z "$target" ]]; then
+    target="${ebook%.*}"
+fi
+if [[ -z "$target" ]]; then
+    >&2 echo "error: empty '$target "
+    exit 1
+fi
+if [[ -e "$target" ]]; then
+    >&2 echo "error: file '$target' exists"
+    exit 1
+fi
+
+ebookext="${ebook##*.}"
+if [[ "$ebookext" != "epub" ]]; then
+    >&2 echo "error: file '$ebook' is not epub format"
+    exit 1
+fi
+
+# unpack ebook ======================
+
+tmp="$target.$RANDOM"
+7z x "$ebook" -o"$tmp"
+
+for f in $(find "$tmp/html" -iname '*.html'); do
+    rename_html_img "$f"
+done
+
+mv "$tmp/image" "$target"  #TODO: get image location form html
+rm -rf "$tmp"
+
+# nomailze ============
+cd "$target"
+rm createby.*
+mv cover.jpg.jpg 000-cover.jpg
+mv cover.png.png 000-cover.png
+rename 's/^/00/' {1..9}.*
+rename 's/^/0/' {10..99}.*
+

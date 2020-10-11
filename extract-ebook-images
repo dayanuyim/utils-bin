@@ -1,0 +1,28 @@
+#!/bin/bash
+
+target_dir="$2"
+
+ebook="$1"
+if [[ -z "$ebook" ]]; then
+    >&2 echo "usage: ${0##*/} <ebook-file> [target-dir]" 
+    exit 1
+fi
+
+ebookbase="${1%.*}"
+if [[ -z "$ebookbase" ]]; then
+    >&2 echo "error: no basename"
+    exit 1
+fi
+
+ebookext="${ebook##*.}"
+
+if [[ "$ebookext" != "epub" ]]; then
+    epub="$ebookbase.epub"
+    ebook-convert "$ebook" "$epub" -v --output-profile tablet --flow-size=0 --dont-split-on-page-breaks --disable-remove-fake-margins && \
+    extract-epub-images "$epub" "$target_dir" && \
+    rm "$epub"
+else
+    epub="$ebook"
+    extract-epub-images "$epub" "$target_dir"
+fi
+

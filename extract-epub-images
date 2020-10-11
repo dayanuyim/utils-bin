@@ -1,0 +1,37 @@
+#!/bin/bash
+
+fname="$1"
+if [[ -z "$fname" ]]; then
+    >&2 echo "usage: ${0##*/} <file.epub> [target-dir]" 
+    exit 1
+fi
+
+target="$2"
+if [[ -z "$target" ]]; then
+    target="${1%.*}"
+fi
+if [[ -z "$target" ]]; then
+    >&2 echo "error: empty '$target "
+    exit 1
+fi
+if [[ -e "$target" ]]; then
+    >&2 echo "error: file '$target' exists"
+    exit 1
+fi
+
+tmp="$target.$RANDOM"
+
+7z x "$fname" -o"$tmp"
+
+src="$tmp/images" 
+if [[ ! -e "$src" ]]; then
+    src="$tmp/image" 
+fi
+if [[ ! -e "$src" ]]; then
+    >&2 echo "error: no image folder found. candicates: [images, image]."
+    exit 1
+fi
+
+
+mv "$src" "$target"
+rm -rf "$tmp"
