@@ -10,6 +10,5 @@ fi
 if uname -a | grep -q Darwin; then
     hdiutil makehybrid -iso -joliet -o "$dst" "$src"
 else
-    >&2 echo "Not implement in the system yet."
-    exit 255
+    mkisofs -o "$dst" "$src"
 fi
