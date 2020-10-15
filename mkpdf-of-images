@@ -1,0 +1,40 @@
+#!/bin/bash
+
+###########################
+# conver subfolder to pdf
+# prerequisite:
+#     brew install imagemagick
+###########################
+
+
+usage(){
+    echo "${0##*/} <dir-of-images> [target-pdf]"
+}
+
+src_dir="$1"
+dst_pdf="$2"
+
+if [ -z "$src_dir" ]; then
+    usage
+    exit 1
+fi
+
+if [ -z "$dst_pdf" ]; then
+    dst_pdf="$1.pdf"
+fi
+if [ -e "$dst_pdf" ]; then
+    >&2 echo "error: target pdf exist: $dst_pdf"
+    exit 1
+fi
+
+echo -n "[+] making '$src_dir' to pdf '$dst_pdf'..."
+
+if uname -a | grep -q Darwin; then
+    cd "$src_dir" || exit 2
+    convert $(find . -type f -maxdepth 1 -not -name '.*' | sort -n) "../$dst_pdf"
+else
+    >&2 echo "no implementation for the system."
+    exit 3
+fi
+
+echo "Done"
