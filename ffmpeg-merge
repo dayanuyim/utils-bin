@@ -4,7 +4,7 @@ video=$1
 audio=$2
 
 if [ -z "$video" ] || [ -z "$audio" ]; then
-    echo "usage: $0 <video> <audio>"
+    echo "usage: ${0##*/} <video> <audio>"
     exit 1
 fi
 
