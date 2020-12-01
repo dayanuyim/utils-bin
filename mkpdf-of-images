@@ -7,20 +7,16 @@
 ###########################
 
 
-usage(){
-    echo "${0##*/} <dir-of-images> [target-pdf]"
-}
-
-src_dir="$1"
+src_dir="${1%/}"
 dst_pdf="$2"
 
-if [ -z "$src_dir" ]; then
-    usage
+if [ ! -d "$src_dir" ]; then
+    >&2 echo "${0##*/} <dir-of-images> [target-pdf]"
     exit 1
 fi
 
 if [ -z "$dst_pdf" ]; then
-    dst_pdf="$1.pdf"
+    dst_pdf="$src_dir.pdf"
 fi
 if [ -e "$dst_pdf" ]; then
     >&2 echo "error: target pdf exist: $dst_pdf"
