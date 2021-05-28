@@ -1,0 +1,13 @@
+#!/bin/bash
+
+image="$1"
+host="$2"
+
+if [[ -z $image || -z $host ]]; then
+    >&2 echo "usage: ${0##*/} <imange> <[user@]host>"
+    exit 1
+fi
+
+docker save "$image" |
+    bzip2 | pv |
+    ssh "$host" 'bunzip2 | docker load'

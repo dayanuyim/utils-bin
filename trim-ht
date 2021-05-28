@@ -1,0 +1,16 @@
+#!/bin/bash
+
+######################################
+# Trim Head and Tail
+######################################
+
+first=$1
+last=${2:-0}
+
+if [[ -z "$first" ]]; then
+    >&2 echo "usage: ${0##*/} <first-lines> [last-lines]"
+    exit 1
+fi
+
+
+head -n -$last | tail -n +$((first+1))
