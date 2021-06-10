@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+function usage {
+    >&2 cat <<-EOT
+	usage: ${0##*/} <fileencoding> <file>
+EOT
+}
+
+function get_fenc {
+    file -I "$1" | sed -n 's/.*charset=\(.*\)/\1/p'
+}
+
+fenc="$1"
+file="$2"
+
+if [[ -z "$file" ]]; then
+    usage
+    exit 1
+fi
+
+if [[ -z "$fenc" || "$fenc" == "-" ]]; then
+    fenc="$(get_fenc "$file")"
+fi
+
+iconv -f "$fenc" -t utf-8 "$file"
