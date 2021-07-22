@@ -1,0 +1,10 @@
+#!/bin/bash
+
+iface="$1"
+
+if [[ -z "$1" ]]; then
+    echo "usage ${0##*/} <iface>" >&2
+    exit
+fi
+
+sudo ifdown "$iface" &&  sudo ifup "$iface"
