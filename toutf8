@@ -2,7 +2,8 @@
 
 function usage {
     >&2 cat <<-EOT
-	usage: ${0##*/} <fileencoding> <file>
+	usage: ${0##*/} <file>
+	usage: ${0##*/} --fenc <encoding> <file>
 EOT
 }
 
@@ -10,16 +11,27 @@ function get_fenc {
     file -I "$1" | sed -n 's/.*charset=\(.*\)/\1/p'
 }
 
-fenc="$1"
-file="$2"
+# specifed file encoding
+if [[ $1 == "--fenc" ]]; then
+    fenc="$2"
+    shift 2
+fi
 
+# set file
+file="$1"
 if [[ -z "$file" ]]; then
     usage
     exit 1
 fi
 
-if [[ -z "$fenc" || "$fenc" == "-" ]]; then
+# detect fileencoding
+if [[ -z "$fenc" ]]; then
     fenc="$(get_fenc "$file")"
+    if [[ -z "$fenc" ]]; then
+        >&2 echo "cannot detect file encoding"
+    fi
 fi
 
 iconv -f "$fenc" -t utf-8 "$file"
+
+>&2 echo $'\e[0;32m'">> Converted from $fenc to UTF-8 <<"$'\e[0m'

@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
-src="$1"
+src="${1%/}"
 dst="$2"
 if [[ -z $src || -z $dst ]]; then
     >&2 echo "usage: $(basename "$0") <src-folder> <dst-iso>"
     exit 1
 fi
+
+# clean .DS_Store
+find "$src" -name .DS_Store -type f -print0 -delete
 
 if uname -a | grep -q Darwin; then
     hdiutil makehybrid -iso -joliet -o "$dst" "$src"

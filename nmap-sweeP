@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+iface="$1"
+
+if [[ -z "$iface" ]]; then
+    >&2 echo "usage: ${0##*/} <iface>"
+    exit 1
+fi
+
+addr=$(ip addr show "$iface" 2>/dev/null | grep 'inet ' | awk '{print $2}')
+if [[ -z $addr ]]; then
+    >&2 echo "interface '$iface' not found"
+    exit 2
+fi
+
+sudo nmap -n -sP "$addr" | gsed 's/^Nmap/\nNmap/'
+

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+prompt="Your passwd to sudo: "
+
 if uname -a | grep -q Darwin; then
-    lsof -n -iTCP -sTCP:LISTEN
+    sudo -p "$prompt"  lsof -n -nP -iTCP -sTCP:LISTEN
 else
-    netstat -tlunp
+    sudo -p "$prompt" netstat -tlunp
 fi

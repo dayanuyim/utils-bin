@@ -19,8 +19,10 @@ cmd=$1
 disk=$2
 img=$3
 if [[ -z "$cmd" || -z "$disk" || -z "$img" ]]; then
-    echo "usage: $(basename "$0") backup diskN NAME.gz"
-    echo "usage: $(basename "$0") restore diskN NAME.gz"
+    cat >&2 <<-EOT
+	usage: $(basename "$0") backup diskN NAME.gz"
+	       $(basename "$0") restore diskN NAME.gz"
+	EOT
     exit 1
 fi
 
@@ -33,12 +35,10 @@ sz=$(diskutil info "$dev" | grep 'Disk Size' | sed  's/.*(\([0-9][0-9]*\) Bytes)
 
 
 if [[ "$cmd" == "backup" ]]; then
-    set -x
     sudo true && sudo dd if="$rdev" bs=1m | pv -s "$sz" | gzip > "$img"
     [[ -n $eject ]] && diskutil eject "$dev"
 
 elif [ "$cmd" == "restore" ]; then
-    set -x
     diskutil unmountDisk "$dev"
     sudo true && gzip -dc "$img" | pv -s "$sz" | sudo dd of="$rdev" bs=1m
     [[ -n $eject ]] && diskutil eject "$dev"
