@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+bbb=192.168.7.2
+
+if [[ $1 == poweroff ]]; then
+    # eject if mounted
+    dev="$(mount | awk '$3 == "/Volumes/BEAGLEBONE" {print $1}')"
+    if [[ -n $dev ]]; then
+        diskutil eject "$dev"
+    fi
+    # should use pubkey to login
+    ssh root@$bbb poweroff
+else
+    >&2 echo "usage: ${0##*/} [poweroff]"
+    exit 1
+fi
