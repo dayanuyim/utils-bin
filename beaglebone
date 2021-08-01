@@ -1,16 +1,43 @@
 #!/usr/bin/env bash
 
-bbb=192.168.7.2
+BBB=${BBB:-192.168.7.2}
+
+function _poweroff {
+    # eject if mounted
+    if uname -a | grep -q Darwin; then
+        dev="$(mount | awk '$3 == "/Volumes/BEAGLEBONE" {print $1}')"
+        if [[ -n $dev ]]; then
+            diskutil eject "$dev"
+        fi
+    else
+        echo "not implement yet" >&2
+        exit 9
+    fi
+
+    # should use pubkey to login
+    ssh root@$BBB poweroff
+}
+
+function _mnt {
+    case "$1" in
+        "")           echo "error: no device specified" >&2; exit 1 ;;
+        sdcard:[0-9]) dev="/dev/mmcblk0p${1##*:}" ;;
+        /dev/*)       dev="$1" ;;
+        *)            dev="/dev/$1" ;;
+    esac
+
+    dst="${2:-/mnt}"
+
+    echo "[+] mounting '$dev' to '$dst'..."
+    ssh root@$BBB mount "$dev" "$dst"
+}
 
 if [[ $1 == poweroff ]]; then
-    # eject if mounted
-    dev="$(mount | awk '$3 == "/Volumes/BEAGLEBONE" {print $1}')"
-    if [[ -n $dev ]]; then
-        diskutil eject "$dev"
-    fi
-    # should use pubkey to login
-    ssh root@$bbb poweroff
+    _poweroff
+elif [[ $1 == mnt ]]; then
+    shift
+    _mnt "$@"
 else
-    >&2 echo "usage: ${0##*/} [poweroff]"
+    >&2 echo "usage: ${0##*/} [poweroff|mnt]"
     exit 1
 fi
