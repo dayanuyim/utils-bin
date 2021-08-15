@@ -31,15 +31,15 @@ rdev="/dev/r$disk"
 check_device "$dev"
 check_device "$rdev"
 
-sz=$(diskutil info "$dev" | grep 'Disk Size' | sed  's/.*(\([0-9][0-9]*\) Bytes).*/\1/')
-
 
 if [[ "$cmd" == "backup" ]]; then
     sudo true && sudo dd if="$rdev" bs=1m | pv -s "$sz" | gzip > "$img"
+    sz=$(diskutil info "$dev" | grep 'Disk Size' | sed  's/.*(\([0-9][0-9]*\) Bytes).*/\1/')
     [[ -n $eject ]] && diskutil eject "$dev"
 
 elif [ "$cmd" == "restore" ]; then
     diskutil unmountDisk "$dev"
+    sz=$(gzip -l "$img" | tail -n1 | awk '{print $2}')
     sudo true && gzip -dc "$img" | pv -s "$sz" | sudo dd of="$rdev" bs=1m
     [[ -n $eject ]] && diskutil eject "$dev"
 

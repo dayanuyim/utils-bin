@@ -5,6 +5,11 @@
 listfile=$1
 outfile=$2
 
-set -x
+
+if [[ -z $listfile || -z $outfile ]]; then
+    echo "usage: ${0##*/} <list-file> <output-file>"
+    exit 1
+fi
+
 ffmpeg -f concat -safe 0 -i "$listfile" -c copy "$outfile"
 
