@@ -1,7 +1,11 @@
-#!/usr/bin/env awk
+#!/usr/bin/env awk -f
 
 # Columns:    1,     2,    3,     4,     5,    6
 # Columns: time, price, kind, store, goods, note
+
+BEGIN{
+    FS=","
+}
 
 {
     print $0;

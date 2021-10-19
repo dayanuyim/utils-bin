@@ -1,20 +1,19 @@
 #!/usr/bin/env bash
 
 DIR="$(realpath "$0" | xargs dirname)"
-BK="$DIR/bookkeeping.csv"
-AWK_SCRIPT="$DIR/bookkeeping.awk"
+BK_DAT="$DIR/bookkeeping.csv"
+BK_FMT="$DIR/bookkeeping.awk"
 
 function list {
     [[ -n $1 ]] && filter="$1" || filter="^$(date '+%Y-%m')"
-    grep --color=always -e "$filter" "$BK" |
-        awk -F ',' -f "$AWK_SCRIPT"
+    grep --color=always -e "$filter" "$BK_DAT" | "$BK_FMT"
 }
 
 cmd="${1:-list}"
 shift
 
 if [[ $cmd == edit ]]; then
-    vim + "$BK"
+    vim + "$BK_DAT"
 elif [[ $cmd == list ]]; then
     list "$@"
 else
