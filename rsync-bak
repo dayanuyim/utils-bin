@@ -1,0 +1,55 @@
+#!/bin/bash
+
+############
+# usage: rsync-bak-usb $HOME/MEGAsync/ /Volumes/SANS/MEGAsync/
+############
+
+src="$1"
+dst="$2"
+if [[ -z $src || -z $dst ]]; then
+    echo "usage: ${0##*/} <SrcFolder> <DstFolder>" >&2
+    exit 1
+fi
+
+#TMPFILE=$(mktemp /tmp/${0##*/}.XXXXXX) || exit 1
+
+function prompt_copy {
+    $n
+    while true; do
+        read -r -p $'\e[1;31m\e[47m==> To Copy (Y/N)?\e[0m ' ans
+        case $ans in 
+            [Yy]* ) return 0;;
+            [Nn]* ) return 1;;
+            *) ;;
+        esac
+    done
+}
+
+function do_copy {
+    case "$1" in
+        0) flag="-n";;
+        *) flag="";;
+    esac
+
+    # r: recursive
+    # l: keep link
+    # t: keep time (otherwise, use -u to prevent the need to sync due to time diff)
+    # u: only sync if newer
+    # P: --partial --progress
+    # v: verbose
+    # n: dryrun
+    # --delete-excluded: delete files even those usually being ignored
+    # ---------------
+    # p: keep permission
+    # o: keep owner
+    # g: keep group
+    # c: comparing files base on checksum
+    rsync -rl -ut -Pv $flag --delete-excluded --exclude='.DS_Store' "$src" "$dst"
+}
+
+
+do_copy 0
+has_diff=1  #TODO detect diff according to the dry-run reuslt
+if [[ -n "$has_diff" ]] && prompt_copy; then
+    do_copy
+fi
