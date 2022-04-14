@@ -21,7 +21,7 @@ def parseFilename(fname):
     return (date, title, sn)
 
 def fmtFilename(date, title, sn):
-    return "%d-%s-%d" % (date, title, sn)
+    return "%04d-%s-%d" % (date, title, sn)
 
 def check_date(date, title, sn):
     diff = int((sn -1) / NUM_PER_DAY)
