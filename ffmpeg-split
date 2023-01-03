@@ -1,0 +1,43 @@
+#!/bin/bash
+
+input="$1"
+start="$2"
+stop="$3"
+output="$4"
+
+if [[ -z $input || -z $start || -z $stop ]]; then
+    echo "usage: ${0##*/} <input> <start> <stop> [output]" >&2
+    echo "        (start/stop time format: - or hh:mm:ss)" >&2
+    exit 1
+fi
+
+if [[ "$start" != "-" && ${#start} != 8 ]]; then
+    echo "start time format error: should be '-' or 'hh:mm:ss'" >&2
+    exit 2
+fi
+
+if [[ $stop != "-" && ${#stop} != 8 ]]; then
+    echo "stop time format error: should be '-' or 'hh:mm:ss'" >&2
+    exit 2
+fi
+
+if [[ -z "$output" ]]; then
+    dirname="$(dirname "$input")"
+    filebase="${input##*/}"
+    fileext="${filebase##*.}"
+    filename="${filebase%.*}"
+    output="$dirname/$filename.out.$fileext"
+fi
+
+if [[ $start == "-" && $stop == "-" ]]; then
+    >&2 echo "do nothing"
+    exit 0
+elif [[ $start == "-" ]]; then
+    ffmpeg -i "$input" -to "$stop" -c copy "$output"
+elif [[ $stop == "-" ]]; then
+    ffmpeg -i "$input" -ss "$start" -c copy "$output"
+else
+    ffmpeg -i "$input" -ss "$start" -to "$stop" -c copy "$output"
+fi
+
+echo "output to '$output'"

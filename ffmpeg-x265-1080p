@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+QUALITY=22
+
+input="$1"
+begin="$2"
+end="$3"
+
+if [[ -z $input ]]; then
+    echo "usage: ${0##*/} <input> <begin> <end> (time format: - or hh:mm:ss)" >&2
+    exit 1
+fi
+
+if [[ "$begin" == "-" ]]; then
+   begin=""
+elif [[ ${#begin} == 8 ]]; then
+   begin="-ss $begin"
+else
+    echo "Begin time format error: should be '-' or 'hh:mm:ss'" >&2
+    exit 2
+fi
+
+if [[ "$end" == "-" ]]; then
+    end=""
+elif [[ ${#end} == 8 ]]; then
+    end="-to $end"
+else
+    echo "End time format error: should be '-' or 'hh:mm:ss'" >&2
+    exit 2
+fi
+
+
+dir="$(dirname "$input")"
+filebase="$(basename "$input")"
+fileext="${filebase##*.}"
+filename="${filebase%.*}"
+output="$dir/$filename.out.mp4"
+
+set -x
+ffmpeg $begin -i "$input" $end -c:v libx265 -crf "$QUALITY" -preset fast -c:a aac -b:a 160k "$output"
+set +x
+echo "output to '$output'"

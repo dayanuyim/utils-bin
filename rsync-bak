@@ -1,13 +1,10 @@
 #!/bin/bash
 
-############
-# usage: rsync-bak-usb $HOME/MEGAsync/ /Volumes/SANS/MEGAsync/
-############
-
 src="$1"
 dst="$2"
 if [[ -z $src || -z $dst ]]; then
     echo "usage: ${0##*/} <SrcFolder> <DstFolder>" >&2
+    echo "   ex: ${0##*/} $HOME/Documents/books/ /Volumes/SANS/books/" >&2
     exit 1
 fi
 
@@ -44,7 +41,7 @@ function do_copy {
     # o: keep owner
     # g: keep group
     # c: comparing files base on checksum
-    rsync -rl -ut -Pv $flag --delete-excluded --exclude='.DS_Store' "$src" "$dst"
+    rsync -rl -ut -vP $flag --delete-excluded --exclude='.DS_Store' "$src" "$dst"
 }
 
 

@@ -1,0 +1,28 @@
+#!/bin/bash
+
+function fileext {
+    case "$1" in
+        "SubStationAlpha") echo "ass";;
+        "SubRip/SRT")      echo "srt";;
+        "HDMV PGS")        echo "sup";;
+        *)                 echo "txt"
+    esac
+}
+
+mkvfile="$1"
+
+
+if [[ -z $mkvfile ]]; then
+    echo "usage ${0##*/} <mkv-file>" >&2
+    exit 1
+fi
+
+#for id in $(mkvmerge -i "$mkvfile" | grep subtitles | awk '{print $3}' | tr -d ':' ); do
+mkvmerge -i "$mkvfile" | sed -n 's/Track ID \([0-9][0-9]*\): subtitles (\(.*\))/\1:\2/p' | while read sub; do
+    id="${sub%:*}"
+    filetype="${sub#*:}"
+    ext=$(fileext "$filetype")
+    mkvextract tracks "$mkvfile" "$id:$id.$ext"
+done
+
+
