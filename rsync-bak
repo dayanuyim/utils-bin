@@ -11,7 +11,6 @@ fi
 #TMPFILE=$(mktemp /tmp/${0##*/}.XXXXXX) || exit 1
 
 function prompt_copy {
-    $n
     while true; do
         read -r -p $'\e[1;31m\e[47m==> To Copy (Y/N)?\e[0m ' ans
         case $ans in 

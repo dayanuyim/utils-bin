@@ -47,23 +47,25 @@ then
         rmdir "$dir/Subs"
 
         # rename the country part of filenames
-        mv "$dir/$prefix".*_Eng*.srt    "$dir/$prefix.en.srt" 2>/dev/null
-        mv "$dir/$prefix".*_Chinese.srt "$dir/$prefix.zh.srt" 2>/dev/null
+        mv "$dir/$prefix".*_Eng*.srt     "$dir/$prefix.en.srt" 2>/dev/null
+        mv "$dir/$prefix".*_Chinese.srt  "$dir/$prefix.zh.srt" 2>/dev/null
+        mv "$dir/$prefix".*_Japanese.srt "$dir/$prefix.ja.srt" 2>/dev/null
     fi
 fi
 
 # change the folder name
-if [[ $(grep -o '\.-' <<< "$dir" | wc -l) -gt 3 ]]; then      # Archive
+if [[ $(grep -o '\.-' <<< "$dir" | wc -l) -gt 3 ]]; then    # Archive
     sp='\.-'
-elif [[ $dir == *" "* ]]; then                                # YTS
+elif [[ $(grep -o '-' <<< "$dir" | wc -l) -gt 3 ]]; then    # Archive
+    sp='-'
+elif [[ $dir == *" "* ]]; then                              # YTS
     sp=' '
-else                                                          #RARBG
+else                                                        # RARBG
     sp='\.'
 fi
 
-#                   Change SP  ; Camel Case              ; Insert TITLE and trme Anyting after the year
-new_dir="$(gsed -E 's#'$sp'#.#g; s#(\.|^)([a-z])#\1\U\2#g; s#(.*)\.\(?(19|20)([0-9]{2})\)?\..*#\1.'$title'.\2\3#' <<< "$dir")"
-#new_dir="$(gsed -E 's#('$sp'|^)([a-z])#\1\U\2#g; s#(.*)'$sp'\(?(19|20)([0-9]{2})\)?'$sp'.*#\1.'$title'.\2\3#; s#'$sp'#.#g' <<< "$dir")"
+#                   Change SP -; Camel Case -------------; Insert TITLE and Trim anyting after the year -------
+new_dir="$(gsed -E "s#${sp}#.#g; s#(\.|^)([a-z])#\1\U\2#g; s#(.*)\.\(?(19|20)([0-9]{2})\)?\..*#\1.${title}.\2\3#" <<< "$dir")"
 echo "[+] rename '$dir' => '$new_dir'"
 mv "$dir" "$new_dir"
 

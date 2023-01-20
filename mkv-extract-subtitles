@@ -1,28 +1,41 @@
 #!/bin/bash
 
+# the mapping of merge -i
 function fileext {
     case "$1" in
         "SubStationAlpha") echo "ass";;
         "SubRip/SRT")      echo "srt";;
         "HDMV PGS")        echo "sup";;
+        "VobSub")          echo "sub";;
         *)                 echo "txt"
     esac
 }
 
 mkvfile="$1"
 
-
 if [[ -z $mkvfile ]]; then
     echo "usage ${0##*/} <mkv-file>" >&2
     exit 1
 fi
 
-#for id in $(mkvmerge -i "$mkvfile" | grep subtitles | awk '{print $3}' | tr -d ':' ); do
-mkvmerge -i "$mkvfile" | sed -n 's/Track ID \([0-9][0-9]*\): subtitles (\(.*\))/\1:\2/p' | while read sub; do
-    id="${sub%:*}"
-    filetype="${sub#*:}"
-    ext=$(fileext "$filetype")
-    mkvextract tracks "$mkvfile" "$id:$id.$ext"
-done
+mkvmerge -F json -i "$mkvfile" | \
+    jq -c -r '.tracks[] | [.id, .type, .codec, .properties.track_name] | join(":")' | \
+    while IFS=':' read -r id _type codec name;
+    do
+        echo -ne '\033[32m'"$id, $_type, $codec, $name"'\033[0m' >&2
 
+        if [[ "$_type" == "subtitles" ]]; then
+            echo "" >&2
+            ext="$(fileext "$codec")"
+            mkvextract tracks "$mkvfile" "$id:${id}_${name}.$ext"
+        else
+            echo "...skip" >&2
+        fi
+    done
+
+#mkvmerge -i "$mkvfile" | \
+#   sed -n 's/Track ID \([0-9][0-9]*\): subtitles (\(.*\))/\1:\2/p' |
+#   while read sub; do
+#       #id:codec
+#   done
 
