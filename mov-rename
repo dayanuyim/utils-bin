@@ -2,12 +2,13 @@
 
 function usage_exit()
 {
-    >&2 echo "Usage: ${0##*/} <dir> <title>"
+    >&2 echo "Usage: ${0##*/} <dir> <title> [sn]"
     exit 1
 }
 
 dir="${1%/}"
 title="$2"
+sn="$3"
 
 if [ ! -d "$dir" ]; then
     >&2 echo "No such folder '$dir'."
@@ -17,6 +18,10 @@ fi
 if [ -z "$title" ]; then
     >&2 echo "No title specified."
     usage_exit
+fi
+
+if [[ -n "$sn" && "$sn" != *. ]]; then
+    sn="${sn}."
 fi
 
 # clean
@@ -39,17 +44,17 @@ then
         >&2 echo "[+] video file: $video"
 
         # flaten subtitle files
-        prefix="${video%.*}"
+        basename="${video%.*}"
         for f in "$dir/Subs/"*; do
             [[ -e "$f" ]] || break  # handle the case of no *.wav files
-            mv "$f" "$dir/$prefix.${f##*/}"
+            mv "$f" "$dir/$basename.${f##*/}"
         done
         rmdir "$dir/Subs"
 
         # rename the country part of filenames
-        mv "$dir/$prefix".*_Eng*.srt     "$dir/$prefix.en.srt" 2>/dev/null
-        mv "$dir/$prefix".*_Chinese.srt  "$dir/$prefix.zh.srt" 2>/dev/null
-        mv "$dir/$prefix".*_Japanese.srt "$dir/$prefix.ja.srt" 2>/dev/null
+        mv "$dir/$basename".*_Eng*.srt     "$dir/$basename.en.srt" 2>/dev/null
+        mv "$dir/$basename".*_Chinese.srt  "$dir/$basename.zh.srt" 2>/dev/null
+        mv "$dir/$basename".*_Japanese.srt "$dir/$basename.ja.srt" 2>/dev/null
     fi
 fi
 
@@ -66,6 +71,7 @@ fi
 
 #                   Change SP -; Camel Case -------------; Insert TITLE and Trim anyting after the year -------
 new_dir="$(gsed -E "s#${sp}#.#g; s#(\.|^)([a-z])#\1\U\2#g; s#(.*)\.\(?(19|20)([0-9]{2})\)?\..*#\1.${title}.\2\3#" <<< "$dir")"
+new_dir="${sn}$new_dir"
 echo "[+] rename '$dir' => '$new_dir'"
 mv "$dir" "$new_dir"
 

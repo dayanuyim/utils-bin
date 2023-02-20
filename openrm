@@ -1,0 +1,15 @@
+#!/bin/bash
+
+source "${0%/*}/libs.sh"
+
+target="$1"
+if [[ ! -f "$target" ]]; then
+    echo "No such file" >&2
+    exit 1
+fi
+
+if open "$target"; then
+    if ask_yesno "Remove the file" 'Y'; then
+        rm "$target"
+    fi
+fi
