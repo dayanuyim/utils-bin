@@ -1,0 +1,26 @@
+#!/bin/bash
+
+source "${0%/*}/libs.sh"
+
+#function filter_list {
+#    start_print=
+#    while IFS= read -r line; do
+#        if [[ -z "$line" ]]; then
+#            break
+#        fi
+#        echo $line
+#    done
+#}
+
+lst="$(mktemp /tmp/${0##*/}.XXXXXXXX)"
+trap "rm $lst" EXIT
+
+rsync -n "$@" --no-verbose --out-format='%n' | tee "$lst"
+if [[ ! -s "$lst" ]]; then
+    echo "no files to sync."
+    exit 0
+fi
+
+if ask_yesno "To Sync"; then
+    rsync --files-from="$lst" "$@"
+fi
