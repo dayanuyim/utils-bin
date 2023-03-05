@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+source "${0%/*}/libs.sh"
+
+# Create $dst dir before moving $srcs, if needed.
+# NOTE: consider the case where $dst has the same name in $srcs
+function mv_to_dir {
+    dst="${!#}"
+    srcs=("${@:1:$(($#-1))}")
+
+    echo "[+] Moving files to the folder '$dst':" >&2
+    for s in "${srcs[@]}"; do
+        echo "  $s" >&2
+    done
+
+    if [[ -d "$dst" ]]; then
+        mv -n "${srcs[@]}" "$dst/"
+    else
+        tmp="$(mktemp -d "$(dirname "$dst")/tmp.XXXXXX")"
+        mv "${srcs[@]}" "$tmp/"
+        mv "$tmp" "$dst"
+    fi
+
+    echo "...done" >&2
+}
+
+
+basenames=("${@##*/}")
+dirname="$(dirname "$1")"
+
+if [[ ${#basenames[@]} == 0 ]]; then
+    prog="${0##*/}"
+    echo "${prog^^} will create a dir and move file(s) into it." >&2
+    echo "If only one file provided, the basename is used as the dir name;" >&2
+    echo "Otherwise, the prefix of files is used." >&2
+    echo "usage: ${prog} FILE..." >&2
+    exit 1
+fi
+
+if [[ ${#basenames} -ge 2 ]]; then
+    newdir="$(common_prefix "${basenames[@]}")"
+    newdir="${newdir%%.}"
+fi
+
+# the basename (wo extension) of 1st element as fallback
+if [[ -z $newdir ]]; then
+    newdir="${basenames%.*}"
+fi
+
+# fallback more
+if [[ -z $newdir || $newdir == "." || $newdir == ".." ]]; then
+    newdir="${basenames[0]}"
+fi
+
+mv_to_dir "$@" "$dirname/$newdir"

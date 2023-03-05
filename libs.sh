@@ -24,3 +24,24 @@ function ask_yesno {
 }
 
 
+# get the common prefix of two strings
+function _common_prefix_2 {
+    for (( i = 0; i < ${#1}; i++ )); do
+        if [[ "${1:$i:1}" == "${2:$i:1}" ]]; then
+            echo -n "${1:$i:1}"
+        else
+            return 0
+        fi
+    done
+}
+
+# get the common prifix of 0, 1, 2, or n strings
+function common_prefix {
+    p="$1"
+    shift
+    for s in "$@"; do
+        p="$(_common_prefix_2 "$p" "$s")"
+    done
+    echo "$p"
+}
+
