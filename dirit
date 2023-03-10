@@ -20,8 +20,6 @@ function mv_to_dir {
         mv "${srcs[@]}" "$tmp/"
         mv "$tmp" "$dst"
     fi
-
-    echo "...done" >&2
 }
 
 
