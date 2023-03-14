@@ -33,8 +33,8 @@ check_device "$rdev"
 
 
 if [[ "$cmd" == "backup" ]]; then
-    sudo true && sudo dd if="$rdev" bs=1m | pv -s "$sz" | gzip > "$img"
     sz=$(diskutil info "$dev" | grep 'Disk Size' | sed  's/.*(\([0-9][0-9]*\) Bytes).*/\1/')
+    sudo true && sudo dd if="$rdev" bs=1m | pv -s "$sz" | gzip > "$img"
     [[ -n $eject ]] && diskutil eject "$dev"
 
 elif [ "$cmd" == "restore" ]; then

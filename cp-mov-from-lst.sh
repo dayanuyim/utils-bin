@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
-if ! declare -p DRYRUN &>/dev/null; then
-    DRYRUN=1
-fi
+# if ! declare -p DRYRUN &>/dev/null; then
+#     DRYRUN=1
+# fi
 
 source "$HOME/bin/libs.sh"
 
-function exit_msg {
+function errmsg_exit {
     echo "$1" >&2
-    echo "usage: ${0##*/} SrcDir DstDir < LIST" >&2
+    echo "usage: ${0##*/} lst" >&2
     exit 1
 }
 
@@ -20,7 +20,7 @@ function cp_mov
         exit 2
     fi
 
-    [[ -n $DRYRUN ]] && flag='-n' || flag=
+    [[ "$1" == "--dry-run" ]] && flag="$1" && shift || flag=
 
     mov="$1"
     shift
@@ -44,42 +44,45 @@ function bar
     echo -n "$(str_repeat '=' $w)>"
 }
 
-#___Src="${1%/}"
-#___Dst="${2%/}"
-#___
-#___if [[ ! -d $Src ]]; then
-#___    exit_msg "error: SRC folder '$Src' does not exist."
-#___fi
-#___
-#___if [[ -z $DRYRUN && ! -d $Dst ]]; then
-#___    exit_msg "error: DST folder '$Dst' does not exist."
-#___fi
+function run
+{
+    clear && tmux clear-history
 
-bar=$(bar)
-cnt=1
-while IFS= read -r line; do
-    case "$line" in
-        "" | "#"*)
-            ;;
-        "< "*) Src="${line:2}"
-            ;;
-        "> "*) Dst="${line:2}"
-            ;;
-        *)
-            mov="$line"
-            IFS= read -r title
-            IFS= read -r sn
+    [[ "$1" == "--dry-run" ]] && flag="$1" && shift || flag=
 
-            header="$(printf "#%03d   %-100s %-30s %3s" "$cnt" "$mov" "$title" "$sn")"
-            echo "$bar"
-            echo "${c_greenB}$header${c_end}"
+    bar=$(bar)
+    cnt=1
+    while IFS= read -r line; do
+        case "$line" in
+            "" | "#"*)
+                ;;
+            "< "*) Src="${line:2}"
+                ;;
+            "> "*) Dst="${line:2}"
+                ;;
+            *)
+                mov="$line"
+                IFS= read -r title
+                IFS= read -r sn
 
-            cp_mov "$mov" "$title" "$sn"
-            ((++cnt))
-            ;;
-    esac
-done
+                header="$(printf "#%03d   %-100s %-30s %3s" "$cnt" "$mov" "$title" "$sn")"
+                echo "$bar"
+                echo "${c_greenB}$header${c_end}"
 
-if [[ -n $DRYRUN ]]; then
-    echo "-=[DRYRUN]=-"
+                cp_mov $flag "$mov" "$title" "$sn"
+                ((++cnt))
+                ;;
+        esac
+    done
+}
+
+lst="$1"
+if [[ ! -f $lst ]]; then
+    errmsg_exit "error: no list file '$lst'"
+    exit 1
+fi
+
+run --dry-run < "$lst"
+if ask_yesno "Do the copy"; then
+    run < "$lst"
 fi

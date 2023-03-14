@@ -84,7 +84,7 @@ function mv_subtitles {
 }
 
 DRYRUN=
-if [[ $1 == "-n" ]]; then
+if [[ $1 == "-n" || $1 == "--dry-run" ]]; then
     DRYRUN=1
     shift
 fi
