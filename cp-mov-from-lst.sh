@@ -15,8 +15,13 @@ function errmsg_exit {
 # read global variables $Src, $Dst
 function cp_mov
 {
-    if [[ -z $Src || -z $Dst ]]; then
-        echo "error: no src or dst folders" >&2
+    if [[ -z $Src ]]; then
+        echo "error: no source folder specified" >&2
+        exit 2
+    fi
+
+    if [[ -z $Dst ]]; then
+        echo "error: no destination folder specified" >&2
         exit 2
     fi
 
@@ -30,7 +35,7 @@ function cp_mov
         --exclude='.DS_Store' \
         --exclude='~uTorrent*.dat' \
         --exclude='RARBG*' \
-        --exclude='YIYF*.txt' \
+        --exclude='YIFY*.txt' \
         --exclude='*YTS*.jpg' \
         "$Src/$mov" "$Dst/" \
         && \
@@ -65,7 +70,7 @@ function run
                 IFS= read -r title
                 IFS= read -r sn
 
-                header="$(printf "#%03d   %-100s %-30s %3s" "$cnt" "$mov" "$title" "$sn")"
+                header="$(printf "#%03d   %-100s %-3s %-30s" "$cnt" "$mov" "$sn" "$title" )"
                 echo "$bar"
                 echo "${c_greenB}$header${c_end}"
 

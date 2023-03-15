@@ -26,19 +26,24 @@ function mv_to_dir {
 basenames=("${@##*/}")
 dirname="$(dirname "$1")"
 
-if [[ ${#basenames[@]} == 0 ]]; then
-    prog="${0##*/}"
-    echo "${prog^^} will create a dir and move file(s) into it." >&2
-    echo "If only one file provided, the basename is used as the dir name;" >&2
-    echo "Otherwise, the prefix of files is used." >&2
-    echo "usage: ${prog} FILE..." >&2
-    exit 1
-fi
+case ${#basenames[@]} in
+    0)
+        prog="${0##*/}"
+        cat >&2 <<-EOT
+			${prog^^} will create a dir and move file(s) into it.
+			If only one file provided, the basename is used as the dir name; otherwise, the common prefix of files is used.
 
-if [[ ${#basenames} -ge 2 ]]; then
-    newdir="$(common_prefix "${basenames[@]}")"
-    newdir="${newdir%%.}"
-fi
+			usage: ${prog} FILE...
+		EOT
+        exit 1
+        ;;
+    1)  # do nothing for now
+        ;;
+    *)
+        newdir="$(common_prefix "${basenames[@]}")"
+        newdir="${newdir%%.}"
+        ;;
+esac
 
 # the basename (wo extension) of 1st element as fallback
 if [[ -z $newdir ]]; then

@@ -71,8 +71,12 @@ function mv_subtitles {
         # flaten subtitle files
         basename="${video%.*}"
         for f in "$dir/Subs/"*; do
-            [[ -e "$f" ]] || break  # handle the case of no *.wav files
-            mv "$f" "$dir/$basename.${f##*/}"
+            [[ -e "$f" ]] || break  # handle the case of no files
+            fname="${f##*/}"
+            if [[ ${fname} != ${basename}* ]];
+                fname="$basename.$fname"
+            fi
+            mv "$f" "$dir/$fname"
         done
         rmdir "$dir/Subs"
 

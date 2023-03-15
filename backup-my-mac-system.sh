@@ -39,5 +39,16 @@ if ask_yesno "To Copy"; then
     backup
 fi
 
-
-
+# rsync-prompt -rl -ut -vP \
+#     --exclude='.DS_Store' \
+#     --exclude="*.photoslibrary" \
+#     --exclude=".git" \
+#     --exclude="node_modules/" \
+#     --exclude="debug/" \
+#     --exclude="target/" \
+#     --exclude="sessions/" \
+#     --exclude="*.mp4" \
+#     --exclude="*.mkv" \
+#     --exclude="$HOME/Documents/Books" \
+#     --delete --delete-excluded \
+#     $SRCS "$DST"
