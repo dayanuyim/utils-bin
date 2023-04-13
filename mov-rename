@@ -30,6 +30,7 @@ function new_dir()
     # Insert TITLE and Trim anyting after the year -------
     new_name="$(gsed -E "\
         s#${sp}#.#g; \
+        s#['\"]##g; \
         s#(.*)#\L\1#; \
         s#(\.|^)([a-z])#\1\U\2#g; \
         s#\.Of\.#.of.#g; \
@@ -73,7 +74,7 @@ function mv_subtitles {
         for f in "$dir/Subs/"*; do
             [[ -e "$f" ]] || break  # handle the case of no files
             fname="${f##*/}"
-            if [[ ${fname} != ${basename}* ]];
+            if [[ ${fname} != ${basename}* ]]; then
                 fname="$basename.$fname"
             fi
             mv "$f" "$dir/$fname"

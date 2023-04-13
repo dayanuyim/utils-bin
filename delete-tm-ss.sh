@@ -7,7 +7,7 @@ fi
 
 # Delete TimeMachine Snapshots
 
-for t in $(tmutil listlocalsnapshots / | cut -d"." -f4)
+for t in $(tmutil listlocalsnapshots / | tail -n+2 | cut -d"." -f4)
 do
     tmutil deletelocalsnapshots "$t"
 done
