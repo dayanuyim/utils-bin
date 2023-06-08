@@ -6,7 +6,7 @@ src="$1"
 dst="$2"
 if [[ -z $src || -z $dst ]]; then
     echo "usage: ${0##*/} <SrcFolder> <DstFolder>" >&2
-    echo "   ex: ${0##*/} $HOME/Documents/books/ /Volumes/SANS/books/" >&2
+    echo "   ex: ${0##*/} $HOME/Documents/docs/ /Volumes/SANS/docs/" >&2
     exit 1
 fi
 

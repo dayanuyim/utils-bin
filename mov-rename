@@ -50,7 +50,9 @@ function rm_meta_files {
                    -name '~uTorrent*.dat' -or \
                    -name 'RARBG*' -or \
                    -name 'YIYF*.txt' -or \
-                   -name '*YTS*.jpg' \) -delete
+                   -name 'YTS*.txt' -or \
+                   -name '*YTS*.jpg' \
+                \) -delete
     find "$dir" -type f -name '.*' -exec sh -c 'if file "{}" | grep -q AppleDouble; then rm "{}"; fi' \;
 }
 
