@@ -6,6 +6,8 @@
 
 source "$HOME/bin/libs.sh"
 
+inventory=()
+
 function errmsg_exit {
     echo "$1" >&2
     echo "usage: ${0##*/} lst" >&2
@@ -25,21 +27,26 @@ function cp_mov
         exit 2
     fi
 
-    [[ "$1" == "--dry-run" ]] && flag="$1" && shift || flag=
+    local flag=
+    if [[ "$1" == "--dry-run" ]]; then
+        flag=$1 && shift
+    fi
 
-    mov="$1"
-    shift
+    local mov="$1" && shift
 
-    rsync -avhP $flag \
+    if rsync -avhP $flag \
         --exclude='.*' \
         --exclude='.DS_Store' \
         --exclude='~uTorrent*.dat' \
         --exclude='RARBG*' \
         --exclude='YIFY*.txt' \
         --exclude='*YTS*.jpg' \
-        "$Src/$mov" "$Dst/" \
-        && \
-        echo "${c_blueB}$(mov-rename $flag "$Dst/$mov" "$@")${c_end}"
+        "$Src/$mov" "$Dst/" ;
+    then
+        local res="$(mov-rename $flag "$Dst/$mov" "$@")"
+        echo "${c_blueB}$res${c_end}"
+        inventory+=("$(awk -F " -> " '{print $NF}' <<< "$res")")
+    fi
 }
 
 
@@ -49,14 +56,27 @@ function bar
     echo -n "$(str_repeat '=' $w)>"
 }
 
+function flushInv {
+    MOV_DIR=/Volumes/bulk/Movie
+    MOV_LST="$HOME/Dropbox/Doc_文件/movies.lst"
+
+    echo "$(bar)"
+    local lst="$([[ $1 == "--dry-run" ]] && echo "/dev/null" || echo "$MOV_LST")"
+    printf '%s\n' "${inventory[@]}" | sed 's#^'$MOV_DIR/'##' | tee -a "$lst" | nl -n rz -w2 -s'  '
+    inventory=() #clean
+}
+
 function run
 {
     clear && tmux clear-history
 
-    [[ "$1" == "--dry-run" ]] && flag="$1" && shift || flag=
+    local flag=
+    if [[ "$1" == "--dry-run" ]]; then
+        flag=$1 && shift
+    fi
 
-    bar=$(bar)
-    cnt=1
+    local bar=$(bar)
+    local cnt=1
     while IFS= read -r line; do
         case "$line" in
             "" | "#"*)
@@ -66,7 +86,7 @@ function run
             "> "*) Dst="${line:2}"
                 ;;
             *)
-                mov="$line"
+                local mov="$line"
                 IFS= read -r title
                 IFS= read -r sn
 
@@ -79,6 +99,8 @@ function run
                 ;;
         esac
     done
+
+    flushInv $flag
 }
 
 lst="$1"

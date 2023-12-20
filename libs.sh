@@ -59,7 +59,7 @@ function ask_yesno {
     prompt="$1"
     def="$2"
 
-    case "$def" in 
+    case "$def" in
         [Nn]* ) defstr="y/N";;
         [Yy]* ) defstr="Y/n";;
         * )     defstr="y/n";;
@@ -70,7 +70,7 @@ function ask_yesno {
         if [[ -z "$ans" ]]; then
             ans="$def"
         fi
-        case "$ans" in 
+        case "$ans" in
             [Nn]* ) return 1;;
             [Yy]* ) return 0;;
             *) ;;
@@ -101,8 +101,6 @@ function common_prefix {
 }
 
 function str_repeat {
-    for i in $(seq $2); do
-        echo -n "$1";
-    done
+    printf "$1%.0s" $(seq $2)
 }
 
