@@ -1,0 +1,36 @@
+#!/bin/bash
+
+function get_scale
+{
+    w=${1%%x*}
+    h=${1#*x}
+    v=$((w < h? w: h))
+    case "$v" in
+        2160) echo 33.333333%;;
+        1536) echo 50.000000%;;
+        *)    return 1;;
+    esac
+    return 0
+}
+
+srcfile="$1"
+dstfile="$2"
+
+if [[ ! -f "$srcfile" || -z "$dstfile" ]]; then
+    echo "usage: ${0##*/} <srcfile> <dstfile>" >&2
+    exit 1
+fi
+
+size=$(exiftool -short3 -ImageSize "$srcfile")  # 3: value only
+if [[ -z $size ]]; then
+    echo "skip the file '$srcfile'" >&2
+    exit 2
+fi
+
+scale="$(get_scale "$size")"
+if [[ -z $scale ]]; then
+    echo "do not know how to scale the size '$size' of '$srcfile'" >&2
+    exit 3
+fi
+
+(set -x; convert "$srcfile" -scale "$scale" "$dstfile")
