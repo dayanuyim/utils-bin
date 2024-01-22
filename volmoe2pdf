@@ -1,22 +1,17 @@
 #!/bin/bash
 
 ebook="$1"
-dst_pdf="$2"
-
 if [[ -z "$ebook" ]]; then
-    >&2 echo "usage: ${0##*/} <ebook-file> [dst-pdf]" 
+    >&2 echo "usage: ${0##*/} <ebook-file> [dst-pdf]"
     exit 1
 fi
 
-if [[ -n "$dst_pdf" ]]; then
-    name="${dst_pdf%.*}"
+if [[ -n "$2" ]]; then
+    name="${2%.*}"
 else
     name="${ebook%.*}"
 fi
 
-exp_dir="$(realpath "$name")"
-dst_pdf="$exp_dir.pdf"
-
-extract-volmoe-images "$ebook" "$exp_dir"
-mkpdf-of-images "$exp_dir" "$dst_pdf"
+extract-volmoe-images "$ebook" "$name"
+mkpdf-of-images "$name" "${name}.pdf"
 

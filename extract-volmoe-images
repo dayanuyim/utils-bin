@@ -1,41 +1,29 @@
 #!/bin/bash
 
-# Remove /./ and dir/.. sequences from a pathname and write result to stdout.
-function normalize_path {
-    # Remove all /./ sequences.
-    local   path=${1//\/.\//\/}
-
-    # Remove dir/.. sequences.
-    while [[ $path =~ ([^/][^/]*/\.\./) ]]
-    do
-        path=${path/${BASH_REMATCH[0]}/}
-    done
-    echo $path
+function html_2_img {
+    local img="$(sed -n -e 's/.*<img src="\(.*\)" alt.*/\1/p' "$1")"
+    echo "${img#*/}" # strip the prefix '../'
 }
 
-# extract the image refered by the html
-function rename_html_img {
-    html="$1"
+function rename_img {
+    local img="$1"
+    local ext="${img##*.}"
+    local dir="$(dirname "$img")"
+    local new="$dir/$2.$ext"
+    mv -v "$img" "$new"
+}
 
-    html_dir="$(dirname "$html")"
-
-    html_base="${html##*/}"
-    html_base="${html_base%.*}"
-
-    img="$(grep '<img ' "$html" | sed 's/.*src="\(.*\)" alt.*/\1/')"
-    img="$(normalize_path "$html_dir/$img")"
-    img_ext="${img##*.}"
-    img_dir="$(dirname "$img")"
-
-    new_img="$img_dir/$html_base.$img_ext"
-
-    echo mv "$img" "$new_img"
-    mv "$img" "$new_img"
+function normalize {
+    if [[ $1 == cover* ]]; then
+        echo "000-$1"
+    else
+        printf '%03s' "$1"
+    fi
 }
 
 ebook="$1"
 if [[ -z "$ebook" ]]; then
-    >&2 echo "usage: ${0##*/} <ebook-file> [target-dir]" 
+    >&2 echo "usage: ${0##*/} <ebook-file> [target-dir]"
     exit 1
 fi
 
@@ -58,23 +46,22 @@ if [[ "$ebookext" != "epub" ]]; then
     exit 1
 fi
 
-# unpack ebook ======================
-
+# unpack ebook
 tmp="$target.$RANDOM"
 7z x "$ebook" -o"$tmp"
 
-for f in $(find "$tmp/html" -iname '*.html'); do
-    rename_html_img "$f"
-done
+# rename
+(cd "$tmp" &&
+    sed -n -e 's/.*<item id="Page_\(.*\)"  *href="\(.*\)" .*/\1 \2/p' vol.opf |
+    while IFS= read -r line; do
+        page="${line% *}"
+        html="${line#* }"
+        img="$(html_2_img "$html")"
+        page="$(normalize "$page")"
+        rename_img "$img" "$page"
+    done
+)
 
-mv "$tmp/image" "$target"  #TODO: get image location form html
+# clean tmp
+mv "$tmp/image" "$target"
 rm -rf "$tmp"
-
-# nomailze ============
-cd "$target"
-rm createby.*
-mv cover.jpg.jpg 000-cover.jpg
-mv cover.png.png 000-cover.png
-rename 's/^/00/' {1..9}.*
-rename 's/^/0/' {10..99}.*
-

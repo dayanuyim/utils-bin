@@ -104,3 +104,16 @@ function str_repeat {
     printf "$1%.0s" $(seq $2)
 }
 
+# Remove /./ and dir/.. sequences from a pathname and write result to stdout.
+function normalize_path {
+    # Remove all /./ sequences.
+    local   path=${1//\/.\//\/}
+
+    # Remove dir/.. sequences.
+    while [[ $path =~ ([^/][^/]*/\.\./) ]]
+    do
+        path=${path/${BASH_REMATCH[0]}/}
+    done
+    echo $path
+}
+
