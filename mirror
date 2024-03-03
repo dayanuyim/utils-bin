@@ -23,9 +23,10 @@ if [[ -d "$dst" ]]; then
 fi
 
 mkdir -p "$dst"
-find "$src" -type f | while IFS= read -r srcfile;
+find "$src" -type f | sort | while IFS= read -r srcfile;
 do
     dstfile="${dst}${srcfile:${#src}}"
     "$cmd" "$srcfile" "$dstfile"
+    touch -r "$srcfile" "$dstfile"
 done
 

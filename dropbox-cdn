@@ -1,0 +1,58 @@
+#!/usr/bin/env node
+
+async function _http_req(url){
+    //console.log(`[fetch] ${url}`);
+    const resp = await fetch(url, {
+        headers: {
+            origin: "http://localhost",
+        },
+        method: 'HEAD',
+        mode: "cors",
+        redirect: "manual",
+    });
+
+    return {
+        status: resp.status,
+        location: resp.headers.get('location'),
+        allow_orign: resp.headers.get('access-control-allow-origin'),
+    };
+}
+
+async function http_req(url){
+    while(true){
+        const {status, location, allow_orign} = await _http_req(url);
+        if(300 <= status && status < 400){
+            url = location;
+            continue;
+        }
+        return {status, url, allow_orign};
+    }
+}
+
+async function req_cdn_url(url)
+{
+    try{
+        const {status, url: _url, allow_orign} = await http_req(url);
+        if(status == 200){
+            console.log(`Allow Orign: ${allow_orign? 'true': 'false'}`);
+            console.log(_url);
+        }
+        else{
+            console.error(`error: status ${status}`);
+        }
+    }
+    catch(e){
+        console.error(e);
+    }
+}
+
+if(process.argv.length < 3){
+    console.error(`usage: ${process.argv[1].split("/").pop()} <url>`);
+    process.exit(1);
+}
+
+let url = process.argv[2];
+if(url.endsWith('dl=0'))
+    url = url.substring(0, url.length-4) + 'dl=1';
+req_cdn_url(url);
+

@@ -29,8 +29,10 @@ fi
 
 scale="$(get_scale "$size")"
 if [[ -z $scale ]]; then
-    echo "do not know how to scale the size '$size' of '$srcfile'" >&2
-    exit 3
+    echo "do not know how to scale the size '$size' of '$srcfile', do normal copy." >&2
+    echo "copy '$srcfile' ($size) '100%' to '$dstfile'" >&2
+    cp "$srcfile" "$dstfile"
+else
+    echo "shrink '$srcfile' ($size) $scale to '$dstfile'" >&2
+    convert "$srcfile" -scale "$scale" "$dstfile"
 fi
-
-(set -x; convert "$srcfile" -scale "$scale" "$dstfile")

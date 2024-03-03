@@ -1,3 +1,6 @@
 #!/bin/sh
 
-$HOME/Works/GisEditor/main.py "$@"
+home="$HOME/Works/GisEditor"
+
+source $home/.venv/bin/activate
+$home/main.py "$@"
