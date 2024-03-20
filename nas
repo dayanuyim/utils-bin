@@ -2,14 +2,14 @@
 
 ip=192.168.43.7
 dir=mass
+version=1.0
 
 ip=192.168.43.40
 dir=bulk
-version=1.0
+version=3.0
 
 src="//$ip/$dir"
 dst="$HOME/$dir"
-version=3.0
 
 if [[ $1 == mount ]]; then
     if mount | grep -q "$src"; then
