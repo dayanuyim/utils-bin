@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+INDENT_WIDTH=2
+
+if [ "$1" == "-v" ]; then
+    verbose=1
+    shift
+fi
+
+pdf="$1"
+bookmarks="$2"
+
+if [[ -z "$pdf" || -z "$bookmarks" ]]; then
+    echo "usage: ${0##*/} <pdf> <bookmarks>" >&2
+    exit 1
+fi
+
+if [ ! -f "$pdf" ]; then
+    echo "pdf not exists" >&2
+    exit 2
+fi
+
+if [ ! -f "$bookmarks" ]; then
+    echo "bookmarks not exists" >&2
+    exit 3
+fi
+
+filestem="${pdf%.pdf}"
+tmp_pdf="${filestem}.tmp.pdf"
+orig_pdf="${filestem}.orig.pdf"
+pdftk_txt="${filestem}.pdftk.txt"
+
+# parse '  title...page'
+function to_pdftk_bookmarks_ {
+    while IFS= read -r line; do
+        len=${#line}
+        line="$(gsed 's/^[ ]*//' <<< "$line")"
+        level=$((1 + (len - ${#line}) / INDENT_WIDTH))
+        page="${line##*...}"
+        title="${line%...*}"
+        #echo "[$level] $title [$page]"
+
+        cat <<EOT
+BookmarkBegin
+BookmarkTitle: $title
+BookmarkLevel: $level
+BookmarkPageNumber: $page
+
+EOT
+    done < "$1"
+}
+
+function to_pdftk_bookmarks {
+    if [[ -n "$verbose" ]]; then
+        to_pdftk_bookmarks_ "$1" | tee "$pdftk_txt"
+    else
+        to_pdftk_bookmarks_ "$1"
+    fi
+}
+
+if pdftk "$pdf" update_info <(to_pdftk_bookmarks "$bookmarks") output "$tmp_pdf"; then
+    mv "$pdf" "$orig_pdf" && \
+    mv "$tmp_pdf" "$pdf"
+fi
+
+
