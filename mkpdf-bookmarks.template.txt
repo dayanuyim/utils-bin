@@ -1,15 +1,49 @@
-Cover...1
-Preface...9
-ToC...14
-Part I. Title 1...16
-  Chapter 1...18
-  Chapter 2...54
-  Chapter 3...87
-  Chapter 4...97
-Part II. Title 2...106
-  Chapter 5...108
-  Chapter 6...156
-  Chapter 7...202
-  Chapter 8...254
-  Chapter 9...298
-Appendix...578
+[options]
+# the depth of bookmarks to open; 0 means collapse to all (default: 0)
+open_level: 1
+
+# add page labels to the pdf file.
+# set 'no' if the pdf has already had labels added and you want to skip the steps to speed up. (defalt: yes)
+#add_page_labels: no
+
+# set 'yes' if page labels, instead of page numbers, are used in the 'bookmarks' section. (default: no)
+use_page_labels: yes
+
+[page_labels]
+Prefix:Cover...1
+LowercaseRoman...3
+DecimalArabic...17
+Prefix:BackCover...121
+
+[bookmarks]
+Cover...Cover1
+Preface...iii
+ToC...xii
+Part 1...1
+  Chapter 1 Title...3
+    1.1 SubTitle...3
+    1.2 SubTitle...5
+    1.3 SubTitle...20
+  Chapter 2 Title...25
+    2.1 SubTitle...34
+    2.2 SubTitle...35
+    2.3 SubTitle...38
+  Chapter 3 Title...41
+    3.1 SubTitle...41
+    3.2 SubTitle...42
+    3.3 SubTitle...47
+Part 2...50
+  Chapter 4 Title...51
+    4.1 SubTitle...52
+    4.2 SubTitle...65
+  Chapter 5 Title...71
+    5.1 SubTitle...79
+    5.2 SubTitle...81
+  Chapter 6 Title...84
+    6.1 SubTitle...85
+    6.2 SubTitle...85
+    6.3 SubTitle...94
+    6.4 SubTitle...97
+Appendix...109
+  Appendix A...111
+BackCover...BackCover1
