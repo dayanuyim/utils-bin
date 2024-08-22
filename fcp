@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+############################################################
+# A scp-style script to put files via FTP.                 #
+# For now, only the command 'mput' is supported            #
+############################################################
+#
+# Edit /etc/hosts and ~/.netrc if required
+# ----------------------------------------
+# [/etc/hosts]
+# 127.0.0.1	www.example.com
+# ----------------------------------------
+## [~/.netrc]
+# machine www.example.com
+#    login anonymous
+#    password guest
+
+function usage(){
+    echo >&2 "usage: ${0##*/} [-P port] file...  host:remote-dir"
+    echo >&2 " e.g.: ${0##*/} -P 21212 file1 file2 mobile_ap:/folder"
+    echo >&2 "(edit /etc/hosts and ~/.netrc if required)"
+    exit 1
+}
+
+PORT=21
+if [[ "$1" == "-P" ]]; then
+    PORT="$2"
+    shift 2
+fi
+
+if [[ $# -lt 2 ]]; then
+    usage
+fi
+
+LFILES=("${@:1:$#-1}")
+TARGET="${@: -1:1}"
+HOST="${TARGET%%:*}"
+RDIR="${TARGET#*:}"
+
+if [[ -z $HOST || -z $RDIR ]]; then
+    usage
+fi
+
+echo >&2 "[+] connecting to the host $HOST:$PORT."
+echo >&2 "[+] local files: ${LFILES[@]}"
+echo >&2 "[+] remote folder: $RDIR"
+
+# set binary mdoe, and no prompt
+ftp "$HOST" "$PORT" --netrc="$HOME/.netrc" --verbose --no-prompt <<EOF
+binary
+cd "$RDIR"
+mput $(printf '"%s" ' "${LFILES[@]}")
+bye
+EOF
+
+exit $?
