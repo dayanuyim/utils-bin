@@ -100,7 +100,9 @@ function run
         esac
     done
 
+    local count=${#inventory}
     flushInv $flag
+    return $count
 }
 
 lst="$1"
@@ -110,6 +112,13 @@ if [[ ! -f $lst ]]; then
 fi
 
 run --dry-run < "$lst"
+
+count=$?
+if [[ $count == 0 ]]; then
+    echo >&2 "no entry in the list."
+    exit 0
+fi
+
 if ask_yesno "Do the copy"; then
     run < "$lst"
 fi
