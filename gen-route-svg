@@ -1,0 +1,204 @@
+#!/usr/bin/env node
+
+const readline = require('readline');
+
+const INDENT = "  ";
+const TEXT_OFFSET_X = 5;
+const TEXT_OFFSET_Y = 3;
+
+let Scale;
+let Padding;
+
+const Points = {};
+const Lines = [];
+
+function parseLine(line){
+    line = line.trim();
+    if(!line || line.startsWith('#'))
+        return;
+
+    let [id, kind, v, w, text, alignx, aligny, dx, dy] = line.split(':');
+    alignx = alignx || 'right';
+    aligny = aligny || 'top';
+    dx = dx || 0;
+    dy = dy || 0;
+
+    switch(kind) {
+        case 'site':
+        case 'peak':
+            Points[id] = {
+                kind,
+                x: v * Scale + Padding,
+                y: w * Scale + Padding,
+                text, alignx, aligny, dx, dy
+            };
+            break;
+        case 'road':
+        case 'walk':
+            Lines.push({
+                kind,
+                src: v,
+                dst: w,
+                text, alignx, aligny, dx, dy
+            });
+            break;
+    }
+}
+
+function generateSVG(){
+    const points = Object.values(Points);
+
+    maxx = Math.max(...points.map(p => p.x));
+    maxy = Math.max(...points.map(p => p.y));
+    genHead(maxx + Padding, maxy + Padding);
+
+    // draw lines;
+    Lines.forEach(({kind, src, dst}) => {
+        src = Points[src];
+        dst = Points[dst];
+        if(kind == "walk") genWalk(src.x, src.y, dst.x, dst.y);
+        if(kind == "road") genRoad(src.x, src.y, dst.x, dst.y);
+    });
+
+    // draw points;
+    points.forEach(({kind, x, y}) => {
+        if(kind == "peak") genPeak(x, y);
+        if(kind == "site") genSite(x, y);
+    });
+
+    // draw text of lines;
+    Lines.forEach(({src, dst, text, alignx, aligny, dx, dy}) => {
+        src = Points[src];
+        dst = Points[dst];
+        if(text) genText((src.x + dst.x) / 2, (src.y + dst.y) / 2, text, alignx, aligny, dx, dy, 'blue');
+    });
+
+    // draw text of points 
+    points.forEach(({x, y, text, alignx, aligny, dx, dy}) => {
+        if(text) genText(x, y, text, alignx, aligny, dx, dy);
+    });
+
+    genTail();
+}
+
+function genHead(width, height) {
+    console.log(`<svg version="1.1" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`);
+}
+
+function genTail(){
+    console.log("</svg>");
+}
+
+function genRoad(x1, y1, x2, y2){
+    console.log(`${INDENT}<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="2" />`);
+}
+
+function genWalk(x1, y1, x2, y2){
+    console.log(`${INDENT}<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="green" stroke-width="2" stroke-dasharray="4" />`);
+}
+
+function genSite(x, y){
+    const RADIUS = 3;
+    console.log(`${INDENT}<circle cx="${x}" cy="${y}" r="${RADIUS}" stroke="black" stroke-width="1" fill="green" />`);
+}
+
+function genPeak(x, y){
+    const SQRT3 = 1.732;
+    const RADIUS = 4;
+    const offset = RADIUS / 2 * SQRT3;
+
+    // it is OK if no round(), just for a easy-to-read output
+    const x1 = Math.round(x);
+    const y1 = Math.round(y - RADIUS);
+    const x2 = Math.round(x - offset);
+    const y2 = Math.round(y + RADIUS / 2);
+    const x3 = Math.round(x + offset);
+    const y3 = y2;
+
+    console.log(`${INDENT}<polygon points="${x1},${y1} ${x2},${y2} ${x3},${y3}" stroke="black" stroke-width="1" fill="white" />`);
+}
+
+function genText(x, y, text, alignx, aligny, dx, dy, color='black'){
+    const anchor = alignAnchor(alignx);
+    const baseline = alignBaseline(aligny);
+    x += alignOffsetX(alignx);
+    y += alignOffsetY(aligny);
+    console.log(`${INDENT}<text x="${x}" y="${y}" dx="${dx}" dy="${dy}" font-size="smaller" fill="${color}" text-anchor="${anchor}" dominant-baseline="${baseline}">${text}</text>`);
+}
+
+function alignAnchor(align){
+    switch(align){
+        case 'left':   return 'end';
+        case 'center': return 'middle';
+        case 'right':  return 'start';
+        default:       return 'start';
+    }
+}
+
+function alignBaseline(align){
+    switch(align){
+        case 'top':    return 'ideographic';
+        case 'middle': return 'middle';
+        case 'down':   return 'hanging';
+        default:       return 'ideographic';
+    }
+}
+
+function alignOffsetX(align){
+    switch(align){
+        case 'left':  return -TEXT_OFFSET_X;
+        case 'right': return TEXT_OFFSET_X;
+        default:      return 0;
+    }
+}
+
+function alignOffsetY(align){
+    switch(align){
+        case 'top':  return -TEXT_OFFSET_Y;
+        case 'down': return TEXT_OFFSET_Y;
+        default:     return 0;
+    }
+}
+
+
+//----------------------------------------------------------------
+
+// help
+const [_, proc, flag] = process.argv;
+if(flag == '-h' || flag == '--help'){
+    console.warn(`usage: node ${proc.split(/[\\/]/).pop()} [-s|--scale SCALE] [-p|--padding PADDING] < DESCRIPTION_FILE`)
+    process.exit(0);
+}
+
+// set options
+//   skip the first 2 args. ensure that at least 2 args remains.
+for(let i = 2; i < process.argv.length -1; i+=2){
+    const op = process.argv[i];
+    const val = process.argv[i+1];
+
+    switch(op){
+        case '-s':
+        case '--scale':
+            Scale = parseInt(val, 10);
+            break;
+        case '-p':
+        case '--padding':
+            Padding = parseInt(val, 10);
+            break;
+    }
+}
+
+if(!Scale) Scale = 5;
+if(!Padding) Padding = 50;
+
+//----------------------------------------------------------------
+
+// Create an interface to read from stdin (works with pipe or file redirection)
+const interface = readline.createInterface({
+    input: process.stdin,
+    //output: process.stdout,
+    terminal: false
+});
+
+interface.on('line', parseLine);
+interface.on('close', generateSVG);
