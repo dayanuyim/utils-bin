@@ -28,6 +28,11 @@ if [[ -z "$doc" ]]; then
     exit 9
 fi
 
+# auto to add the path prefix
+if [[ "$doc" != Document/* ]]; then
+    doc="Document/$doc"
+fi
+
 # check if the device exists
 ADDR="$(getDeviceAddr)"
 if [[ -z "$ADDR" ]]; then
