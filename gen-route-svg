@@ -12,12 +12,26 @@ let Padding;
 const Points = {};
 const Lines = [];
 
+// inner context
+let _last_pt = null;
+
+function to_pixel(val, pos){
+    const idx = val.search(/[+-]/);
+    if(idx >= 0){
+        const ref = val.substring(0, idx);
+        const diff = val.substring(idx);
+        return (ref? Points[ref]: _last_pt)[pos] + (diff * Scale);  // no need to add Padding again
+    }
+
+    return val * Scale + Padding;
+}
+
 function parseLine(line){
     line = line.trim();
     if(!line || line.startsWith('#'))
         return;
 
-    let [id, kind, v, w, text, alignx, aligny, dx, dy] = line.split(':');
+    let [id, kind, vx, vy, text, alignx, aligny, dx, dy] = line.split(':');
     alignx = alignx || 'right';
     aligny = aligny || 'top';
     dx = dx || 0;
@@ -26,10 +40,10 @@ function parseLine(line){
     switch(kind) {
         case 'site':
         case 'peak':
-            Points[id] = {
+            _last_pt = Points[id] = {
                 kind,
-                x: v * Scale + Padding,
-                y: w * Scale + Padding,
+                x: to_pixel(vx, 'x'),
+                y: to_pixel(vy, 'y'),
                 text, alignx, aligny, dx, dy
             };
             break;
@@ -37,8 +51,8 @@ function parseLine(line){
         case 'walk':
             Lines.push({
                 kind,
-                src: v,
-                dst: w,
+                src: vx,
+                dst: vy,
                 text, alignx, aligny, dx, dy
             });
             break;
@@ -54,6 +68,7 @@ function generateSVG(){
 
     // draw lines;
     Lines.forEach(({kind, src, dst}) => {
+        console.error({src, dst});
         src = Points[src];
         dst = Points[dst];
         if(kind == "walk") genWalk(src.x, src.y, dst.x, dst.y);
@@ -73,7 +88,7 @@ function generateSVG(){
         if(text) genText((src.x + dst.x) / 2, (src.y + dst.y) / 2, text, alignx, aligny, dx, dy, 'blue');
     });
 
-    // draw text of points 
+    // draw text of points
     points.forEach(({x, y, text, alignx, aligny, dx, dy}) => {
         if(text) genText(x, y, text, alignx, aligny, dx, dy);
     });
