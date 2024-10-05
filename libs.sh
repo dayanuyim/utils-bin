@@ -117,3 +117,68 @@ function normalize_path {
     echo $path
 }
 
+# read a number in the <input type="number"> style,
+# which supports arrow keys to step the number
+function readNumber(){
+    local num=
+    local max=$1
+    local curr=${2:-1}
+    local step=${3:-1}
+
+    while true;
+    do
+        # Read a single character (-s suppresses output, -n1 reads one character)
+        # if it's an escape sequence, read the next two characters for the escape sequence.
+        read -rsN1 ch
+        if [[ $ch == $'\e' ]]; then
+            read -rsN2 -t 0.1 ch
+        fi
+
+        case "$ch" in
+            "[A" | "[D") # up | left
+                if [[ $curr -eq 1 ]]; then
+                    echo >&2 "already on the first page."
+                else
+                    num=$((curr - step))
+                    if [[ $num -lt 1 ]]; then
+                        num=1
+                    fi
+                    echo >&2 "$num"
+                fi
+                break
+                ;;
+            "[B" | "[C") # down | right
+                if [[ $curr -eq "$max" ]]; then
+                    echo >&2 "already on the last page."
+                else
+                    num=$((curr + step))
+                    if [[ $num -gt "$max" ]]; then
+                        num=$max
+                    fi
+                    echo >&2 "$num"
+                fi
+                break
+                ;;
+            [0-9])
+                echo >&2 -n "$ch"
+                num="${num}${ch}"
+                ;;
+            $'\n')
+                echo >&2 ''
+                if [[ $num -lt 0 || $num -gt "$max" ]]; then
+                    echo >&2 "page '$num' not in the valid range [1, $max]"
+                    num=
+                fi
+                break
+                ;;
+            q|Q)
+                return 1
+                ;;
+            *)
+                ;;
+        esac
+    done
+
+    echo -n $num
+    return 0
+}
