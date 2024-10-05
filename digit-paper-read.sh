@@ -8,19 +8,17 @@
 source "$HOME/bin/libs.sh"
 
 function getDeviceAddr(){
-    echo "<ip>"
-    #dptrp1 get-configuration /dev/stdout | grep 'Found digital paper at' | awk '{print $NF}'
+    dptrp1 get-configuration /dev/stdout | grep 'Found digital paper at' | awk '{print $NF}'
 }
 
 
 function getTotalPage(){
-    #dptrp1 --addr "$ADDR" document-info "$1" | grep total_page | awk '{print $NF}'
-    echo 100
+    dptrp1 --addr "$ADDR" document-info "$1" | grep total_page | awk '{print $NF}'
 }
 
 function gotoPage(){
     echo >&2 "Going to page $2."
-    #dptrp1 --addr "$ADDR" display-document "$1" "$2"
+    dptrp1 --addr "$ADDR" display-document "$1" "$2"
 }
 
 # check the format
