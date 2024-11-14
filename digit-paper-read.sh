@@ -12,6 +12,10 @@ function getDeviceAddr(){
 }
 
 
+function getCurrentPage(){
+    dptrp1 --addr "$ADDR" document-info "$1" | grep current_page | awk '{print $NF}'
+}
+
 function getTotalPage(){
     dptrp1 --addr "$ADDR" document-info "$1" | grep total_page | awk '{print $NF}'
 }
@@ -48,7 +52,9 @@ if [[ -z "$total" ]]; then
 fi
 
 # get inital page
-page="${2:-1}"
+if [[ -z "$page" ]]; then
+    page=$(getCurrentPage "$doc")
+fi
 
 # got to the initial page
 gotoPage "$doc" "$page"
@@ -61,7 +67,7 @@ echo "---------------------------------------------------------------"
 
 while true; do
     # prompt
-	echo -n "${c_blue}${doc##*/} ${c_white}${b_gray} $page ${c_end}> "
+    echo -n "${c_blueB}${b_gray}${doc##*/}${c_end} ${c_blueB}$page${c_blue}/$total($((100*page/total))%)${c_end}> "
 
     # get number
     if ! num="$(readNumber "$total" $page)"; then
