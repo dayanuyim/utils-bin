@@ -117,13 +117,48 @@ function normalize_path {
     echo $path
 }
 
+function _clear_chars(){
+    local n="${1:-1}"
+    local chars=""
+    for ((i = 0; i < $n; i++)); do
+        chars="${chars}\e[D\e[P"
+    done
+    echo -ne "$chars"
+}
+
+# puting clear and display together will eliminate possible visual delay
+function _update_chars(){
+    if [[ "$1" != "$2" ]]; then
+        _clear_chars ${#1}
+        echo -n "$2"
+    fi
+}
+
+function _add_bounded(){
+    local num="$1"
+    local addend="$2"
+    local min=$3
+    local max=$4
+    num=$((num + addend))
+    if [[ $num -lt "$min" ]]; then
+        num="$min"
+    fi
+    if [[ $num -gt "$max" ]]; then
+        num=$max
+    fi
+    echo -n "$num"
+}
+
+
 # read a number in the <input type="number"> style,
 # which supports arrow keys to step the number
 function readNumber(){
-    local num=
-    local max=$1
-    local curr=${2:-1}
-    local step=${3:-1}
+    local num=$1
+    local min=$2
+    local max=$3
+    local step=${4:-1}
+
+    echo >&2 -n "$num"
 
     while true;
     do
@@ -134,36 +169,29 @@ function readNumber(){
             read -rsN2 -t 0.1 ch
         fi
 
+        #local orig=
         case "$ch" in
             "[A" | "[D") # up | left
-                if [[ $curr -eq 1 ]]; then
-                    echo >&2 "already on the first page."
-                else
-                    num=$((curr - step))
-                    if [[ $num -lt 1 ]]; then
-                        num=1
-                    fi
-                    echo >&2 "$num"
-                fi
-                break
+                local orig="$num"
+                num=$(_add_bounded "$num" "-$step" "$min" "$max")
+                _update_chars >&2 "$orig" "$num"
                 ;;
             "[B" | "[C") # down | right
-                if [[ $curr -eq "$max" ]]; then
-                    echo >&2 "already on the last page."
-                else
-                    num=$((curr + step))
-                    if [[ $num -gt "$max" ]]; then
-                        num=$max
-                    fi
-                    echo >&2 "$num"
-                fi
-                break
+                local orig="$num"
+                num=$(_add_bounded "$num" "$step" "$min" "$max")
+                _update_chars >&2 "$orig" "$num"
                 ;;
-            [0-9])
+            [0-9]) # digit
                 echo >&2 -n "$ch"
                 num="${num}${ch}"
                 ;;
-            $'\n')
+            $'\b' | $'\177') # delete
+				if [[ -n "$num" ]]; then
+					num="${num::-1}"
+                    _clear_chars 1 >&2
+				fi
+                ;;
+            $'\n') # enter
                 echo >&2 ''
                 if [[ $num -lt 0 || $num -gt "$max" ]]; then
                     echo >&2 "page '$num' not in the valid range [1, $max]"

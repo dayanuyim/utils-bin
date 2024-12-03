@@ -52,6 +52,7 @@ if [[ -z "$total" ]]; then
 fi
 
 # get inital page
+page="$2"
 if [[ -z "$page" ]]; then
     page=$(getCurrentPage "$doc")
 fi
@@ -70,7 +71,7 @@ while true; do
     echo -n "${c_blueB}${b_gray}${doc##*/}${c_end} ${c_blueB}$page${c_blue}/$total($((100*page/total))%)${c_end}> "
 
     # get number
-    if ! num="$(readNumber "$total" $page)"; then
+    if ! num="$(readNumber $page 1 "$total")"; then
         echo >&2 "Quitting..."
         exit 0
     fi
