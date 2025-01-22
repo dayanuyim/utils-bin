@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+function windows_open {
+    path="$1"
+    if [ -z "$path" ]; then
+        IFS= read -r path
+    fi
+
+    if [ -z "$path" ]; then
+        echo "no file path specified in the argument or from stdin" >&2
+        exit 1
+    fi
+
+    dir="$(dirname "$path")"
+    file="$(basename "$path")"
+
+    if [ ! -d "$dir" ]; then
+        echo "the dir '$dir' does not exist" >&2
+        exit 2
+    fi
+
+    if [ ! -f "$dir/$file" ]; then
+        echo "the file '$file' does not exist" >&2
+        exit 3
+    fi
+
+    cd "$dir" && explorer "$file"
+}
+
+case "$(uname)" in
+    Darwin)
+        /usr/bin/open "$@"
+        ;;
+    Linux)
+        gopen "$@"
+        ;;
+    *)
+        windows_open "$@"
+        ;;
+esac

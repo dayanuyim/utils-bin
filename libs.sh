@@ -117,3 +117,96 @@ function normalize_path {
     echo $path
 }
 
+function _clear_chars(){
+    local n="${1:-1}"
+    local chars=""
+    for ((i = 0; i < $n; i++)); do
+        chars="${chars}\e[D\e[P"
+    done
+    echo -ne "$chars"
+}
+
+# puting clear and display together will eliminate possible visual delay
+function _update_chars(){
+    if [[ "$1" != "$2" ]]; then
+        _clear_chars ${#1}
+        echo -n "$2"
+    fi
+}
+
+function _add_bounded(){
+    local num="$1"
+    local addend="$2"
+    local min=$3
+    local max=$4
+    num=$((num + addend))
+    if [[ $num -lt "$min" ]]; then
+        num="$min"
+    fi
+    if [[ $num -gt "$max" ]]; then
+        num=$max
+    fi
+    echo -n "$num"
+}
+
+
+# read a number in the <input type="number"> style,
+# which supports arrow keys to step the number
+function readNumber(){
+    local num=$1
+    local min=$2
+    local max=$3
+    local step=${4:-1}
+
+    echo >&2 -n "$num"
+
+    while true;
+    do
+        # Read a single character (-s suppresses output, -n1 reads one character)
+        # if it's an escape sequence, read the next two characters for the escape sequence.
+        read -rsN1 ch
+        if [[ $ch == $'\e' ]]; then
+            read -rsN2 -t 0.1 ch
+        fi
+
+        #local orig=
+        case "$ch" in
+            "[A" | "[D") # up | left
+                local orig="$num"
+                num=$(_add_bounded "$num" "-$step" "$min" "$max")
+                _update_chars >&2 "$orig" "$num"
+                ;;
+            "[B" | "[C") # down | right
+                local orig="$num"
+                num=$(_add_bounded "$num" "$step" "$min" "$max")
+                _update_chars >&2 "$orig" "$num"
+                ;;
+            [0-9]) # digit
+                echo >&2 -n "$ch"
+                num="${num}${ch}"
+                ;;
+            $'\b' | $'\177') # delete
+				if [[ -n "$num" ]]; then
+					num="${num::-1}"
+                    _clear_chars 1 >&2
+				fi
+                ;;
+            $'\n') # enter
+                echo >&2 ''
+                if [[ $num -lt 0 || $num -gt "$max" ]]; then
+                    echo >&2 "page '$num' not in the valid range [1, $max]"
+                    num=
+                fi
+                break
+                ;;
+            q|Q)
+                return 1
+                ;;
+            *)
+                ;;
+        esac
+    done
+
+    echo -n $num
+    return 0
+}

@@ -52,7 +52,7 @@ tmp="$target.$RANDOM"
 
 # rename
 (cd "$tmp" &&
-    sed -n -e 's/.*<item id="Page_\(.*\)"  *href="\(.*\)" .*/\1 \2/p' vol.opf |
+    sed -n -e 's/.*<item id="Page_\(.*\)"  *href="\(.*\)" media.*/\1 \2/p' vol.opf |
     while IFS= read -r line; do
         page="${line% *}"
         html="${line#* }"

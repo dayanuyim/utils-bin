@@ -34,5 +34,5 @@ if [[ -z $scale ]]; then
     cp "$srcfile" "$dstfile"
 else
     echo "shrink '$srcfile' ($size) $scale to '$dstfile'" >&2
-    convert "$srcfile" -scale "$scale" "$dstfile"
+    magick "$srcfile" -scale "$scale" "$dstfile"
 fi
