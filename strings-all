@@ -12,6 +12,6 @@ fi
     $strings -a -td -eL "$@"
     $strings -a -td -eb "$@"
     $strings -a -td -eB "$@"
-} | sort -n
+} | sort -nu
 
 
