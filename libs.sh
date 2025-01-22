@@ -171,14 +171,14 @@ function readNumber(){
 
         #local orig=
         case "$ch" in
-            "[A" | "[D") # up | left
-                local orig="$num"
-                num=$(_add_bounded "$num" "-$step" "$min" "$max")
-                _update_chars >&2 "$orig" "$num"
-                ;;
-            "[B" | "[C") # down | right
+            "[A" | "[C") # up | right
                 local orig="$num"
                 num=$(_add_bounded "$num" "$step" "$min" "$max")
+                _update_chars >&2 "$orig" "$num"
+                ;;
+            "[B" | "[D") # down | left
+                local orig="$num"
+                num=$(_add_bounded "$num" "-$step" "$min" "$max")
                 _update_chars >&2 "$orig" "$num"
                 ;;
             [0-9]) # digit
