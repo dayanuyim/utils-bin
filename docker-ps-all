@@ -1,0 +1,21 @@
+#!/bin/bash
+
+function get_ip {
+    docker inspect --format='{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$1"
+}
+
+function ps_all {
+    docker ps -a --format='table{{.ID}}\t{{.Names}}\t{{printf "%.35s" .Image}}\t{{.Command}}\t{{.Status}}\t{{.Ports}}'
+}
+
+i=0
+ps_all | while IFS= read -r line; do
+    if [[ $i == 0 ]]; then
+        printf '%-10s   %s\n' "IP Address" "$line"
+    else
+        id=$(awk '{print $1}' <<< "$line")
+        ip=$(get_ip "$id")
+        printf '%-10s   %s\n' "$ip" "$line"
+    fi
+    ((i++))
+done | sort -r
