@@ -28,7 +28,7 @@ echo -n "[+] making '$src_dir' to pdf '$dst_pdf'..."
 dst_pdf="$(realpath "$dst_pdf")"
 if uname -a | grep -q Darwin; then
     cd "$src_dir" || exit 2
-    convert $(find . -type f -maxdepth 1 -not -name '.*' | sort -n) "$dst_pdf"
+    convert $(find . -type f -maxdepth 1 -not -name '.*' | LC_ALL=C sort -n) "$dst_pdf"
 else
     >&2 echo "no implementation for the system."
     exit 3
