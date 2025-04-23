@@ -6,7 +6,8 @@
 
 source "$HOME/bin/libs.sh"
 
-MOV_DIR=/Volumes/bulk/Movie
+PREFIX1=/Volumes/bulk/Movie
+PREFIX2=/Volumes/bulk/Drama
 MOV_LST="$HOME/Dropbox/Doc_文件/movies.lst"
 
 #================================================================================
@@ -175,7 +176,7 @@ function flash_inv {
     declare -n inv=$1
 
     print_bar
-    printf '%s\n' "${inv[@]}" | sed 's#^'$MOV_DIR/'##' | tee -a "$lst" | nl -n rz -w2 -s'  '
+    printf '%s\n' "${inv[@]}" | sed -e 's#^'$PREFIX1/'##' -e 's#^'$PREFIX2/'##' | tee -a "$lst" | nl -n rz -w2 -s'  '
 }
 
 function run
