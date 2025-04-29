@@ -3,7 +3,10 @@
 
 inc="$1"
 if [[ -z "$inc" ]]; then
-    >&2 echo "usage: ${0##*/} <inc> [file1..fileN]"
+    echo >&2 "usage: ${0##*/} <inc> [file1..fileN]"
+    echo >&2 "----"
+    echo >&2 "  expected filename format: [prefix]<sn>[suffix][.ext]"
+
     exit 1
 fi
 shift
@@ -17,9 +20,19 @@ function rename {
     for f in $(printf '%s\n' "$@" | sort -r) ; do
         fname="${f%.*}"
         ext="${f:${#fname}}"
+
         prefix="${fname%%[0-9]*}"
+        fname="${fname:${#prefix}}"
+
         suffix="${fname##*[0-9]}"
-        sn="${fname:${#prefix}:${#fname}-${#prefix}-${#suffix}}"
+        sn="${fname:0:${#fname}-${#suffix}}"
+
+        #echo >&2 "[$f] -> [$prefix] [$sn] [$suffix] [$ext]"
+
+        if [[ -z "$sn" ]]; then
+            echo >&2 "[-] warn: no 'sn' part, skip file '$f'"
+            continue
+        fi
 
         new_sn=$((10#$sn + 10#$inc))            # enfore decimal even leading zero
         new_sn=$(printf "%0*d" ${#sn} $new_sn)  # padding leading zero if shortened
@@ -27,11 +40,11 @@ function rename {
         new_f="$prefix$new_sn$suffix$ext"
 
         if [[ -e "$new_f" ]]; then
-            >&2 echo "error: target file exists: mv $f $new_f"
+            echo >&2 "error: target file exists: mv $f $new_f"
             exit 9
         fi
         if [[ -z $is_dry ]]; then
-            echo "[+] mv $f $new_f"
+            echo >&2 "[+] mv $f $new_f"
             mv "$f" "$new_f"
         fi
     done

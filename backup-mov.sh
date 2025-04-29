@@ -163,6 +163,13 @@ function infer_name {
         s@\.Of\.@.of.@g; \
         s@\.Or\.@.or.@g; \
         s@\.And\.@.and.@g; \
+        s@\.Ii\.@.II.@g; \
+        s@\.Iii\.@.III.@g; \
+        s@\.Iv\.@.IV.@g; \
+        s@\.Vi\.@.VI.@g; \
+        s@\.Vii\.@.VII.@g; \
+        s@\.Viii\.@.VIII.@g; \
+        s@\.Ix\.@.IX.@g; \
         s@(.*)\.\(?(19|20)([0-9]{2})\)?(\..*|$)@\1.${title}.\2\3@"
 }
 

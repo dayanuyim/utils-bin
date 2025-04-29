@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 VERBOSE=n
-INDENT_WIDTH=2
+INDENT_WIDTH=4
 #OP_PAGE_FIT=Fit
 OP_PAGE_FIT="XYZ null null null"
 OP_OPEN_LEVEL=0
@@ -376,7 +376,7 @@ PDF="$2"
 SRCPDF="$PDF"
 
 if [[ -z "$BOOKMARKS" || -z "$PDF" ]]; then
-    echo >&2 "usage: ${0##*/} <bookmarks> <pdf>"
+    echo >&2 "usage: ${0##*/} <bookmarks.conf> <pdf>"
     exit 1
 fi
 
