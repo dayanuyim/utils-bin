@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VERBOSE=n
+VERBOSE=y
 INDENT_WIDTH=4
 #OP_PAGE_FIT=Fit
 OP_PAGE_FIT="XYZ null null null"
@@ -140,7 +140,11 @@ function gen_temp {
 }
 
 function clean_all_temps {
-    rm -rf "$TMP"-*
+    if [[ "$VERBOSE" == y ]]; then
+        echo >&2 "[+] Verbose enabled, Please cleanup temp files by yourself: 'rm -rf $TMP-*'"
+    else
+        rm -rf "$TMP"-*
+    fi
 }
 
 function get_page_title {
@@ -161,16 +165,28 @@ function get_op_val {
 
 ############################################################
 
+function cpdf_ {
+    case "$(uname)" in
+        Darwin | Linux)
+            cpdf "$@"
+            ;;
+        *)
+            # filter out the banner line that is print out to STDIN
+            cpdf "$@" | tail -n +2
+            ;;
+    esac
+}
+
 function pdf_pages {
-    cpdf -pages "$SRCPDF" 2>/dev/null
+    cpdf_ -pages "$SRCPDF" 2>/dev/null
 }
 
 function pdf_add_page_labels {
     local output
     output="$(gen_temp).pdf"
 
-    echo >&2 "CMD> cpdf --add-page-labels $SRCPDF $3-$4 -label-prefix '$1' -label-style '$2' -o $output"
-    if cpdf -add-page-labels "$SRCPDF" "$3-$4" -label-prefix "$1" -label-style "$2" -o "$output"; then
+    echo >&2 "CMD> cpdf -add-page-labels $SRCPDF $3-$4 -label-prefix '$1' -label-style '$2' -o $output"
+    if cpdf_ -add-page-labels "$SRCPDF" "$3-$4" -label-prefix "$1" -label-style "$2" -o "$output"; then
         SRCPDF="$output"
     fi
 }
@@ -181,7 +197,7 @@ function pdf_add_bookmarks {
     output="$(gen_temp).pdf"
 
     echo >&2 "CMD> cpdf -add-bookmarks $1 $SRCPDF -o $output"
-    if cpdf -add-bookmarks "$1" "$SRCPDF" -o "$output"; then
+    if cpdf_ -add-bookmarks "$1" "$SRCPDF" -o "$output"; then
         SRCPDF="$output"
     fi
 }
@@ -405,6 +421,4 @@ if [[ "$PDF" != "$SRCPDF" ]]; then
     mv "$SRCPDF" "$PDF"
 fi
 
-if [[ "$VERBOSE" == n ]]; then
-    clean_all_temps
-fi
+clean_all_temps
