@@ -82,6 +82,32 @@ num2roman() { # NUM
 	echo "$output"
 }
 
+function num2text {
+    local style="$1"
+    local n="$2"
+    local txt
+    case "$style" in
+        LowercaseRoman)
+            txt=$(num2roman "$n")
+            txt=${txt,,}
+            ;;
+        UppercaseRoman)
+            txt=$(num2roman "$n")
+            txt=${txt^^}
+            ;;
+        DecimalArabic)
+            txt=$n
+            ;;
+        *)
+            echo >&2 "ERROR Unknown page label style '$style'"
+            return 1
+            ;;
+    esac
+
+    echo -n "$txt"
+    return 0
+}
+
 shopt -s extglob
 
 function trim_trailing {
@@ -126,11 +152,11 @@ function get_page_num {
 }
 
 function get_op_key {
-    trim "${1%%:*}"
+    trim "${1%:*}"
 }
 
 function get_op_val {
-    trim "${1#*:}"
+    trim "${1##*:}"
 }
 
 ############################################################
@@ -140,19 +166,11 @@ function pdf_pages {
 }
 
 function pdf_add_page_labels {
-
-    local args
     local output
     output="$(gen_temp).pdf"
 
-    if [[ "$1" == Prefix:* ]]; then
-        args="-label-prefix $(get_op_val "$1")"
-    else
-        args="-label-style $1"
-    fi
-
-    echo >&2 "CMD> cpdf --add-page-labels $SRCPDF $2-$3 $args -o $output"
-    if cpdf -add-page-labels "$SRCPDF" "$2-$3" $args -o "$output"; then
+    echo >&2 "CMD> cpdf --add-page-labels $SRCPDF $3-$4 -label-prefix '$1' -label-style '$2' -o $output"
+    if cpdf -add-page-labels "$SRCPDF" "$3-$4" -label-prefix "$1" -label-style "$2" -o "$output"; then
         SRCPDF="$output"
     fi
 }
@@ -169,47 +187,32 @@ function pdf_add_bookmarks {
 }
 
 ############################################################
-#
+# $1: [prifix:]style...number
 function set_page_label {
-    local style
-    local first
-    local last
+    local prefix=
+    local style="$(get_page_title "$1")"
+    local first="$(get_page_num "$1")"
+    local last=$2
 
-    style="$(get_page_title "$1")"
-    first="$(get_page_num "$1")"
-    last=$2
-    echo >&2 "set page label '$style' in the range [$first, $last]"
+    if [[ "$style" == *:* ]]; then
+        prefix="$(get_op_key "$style")"
+        style="$(get_op_val "$style")"
+    fi
 
-    # set page label -> page_num mapping
+    echo >&2 "set page label with prefix '$prefix' and style '$style' in the range [$first, $last]"
+
+    # set page mappign: label -> page_num
     local n=0
+    local txt
     for page in $(seq "$first" "$last"); do
         ((n++))
-        case "$style" in
-            LowercaseRoman)
-                roman=$(num2roman $n)
-                PAGE_LABEL_NUM[${roman,,}]=$page
-                ;;
-            UppercaseRoman)
-                roman=$(num2roman $n)
-                PAGE_LABEL_NUM[${roman^^}]=$page
-                ;;
-            DecimalArabic)
-                PAGE_LABEL_NUM[$n]=$page
-                ;;
-            Prefix:*)
-                prefix="${style#Prefix:}"
-                PAGE_LABEL_NUM[$prefix$n]=$page
-                ;;
-            *)
-                echo >&2 "ERROR Unknown page label style '$style'"
-                return 1
-                ;;
-        esac
+        txt="$(num2text "$style" "$n")"
+        PAGE_LABEL_NUM[${prefix}${txt}]=$page
     done
 
     # run the command
     if [[ "$OP_ADD_PAGE_LABALS" == y ]]; then
-        pdf_add_page_labels "$style" "$first" "$last"
+        pdf_add_page_labels "$prefix" "$style" "$first" "$last"
     fi
 }
 
@@ -402,4 +405,6 @@ if [[ "$PDF" != "$SRCPDF" ]]; then
     mv "$SRCPDF" "$PDF"
 fi
 
-#clean_all_temps
+if [[ "$VERBOSE" == n ]]; then
+    clean_all_temps
+fi
