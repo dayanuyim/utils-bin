@@ -32,7 +32,7 @@ case "$(uname)" in
         /usr/bin/open "$@"
         ;;
     Linux)
-        gopen "$@"
+        /usr/bin/open "$@"
         ;;
     *)
         windows_open "$@"

@@ -1,0 +1,38 @@
+#!/bin/bash
+
+function sec2str {
+    seconds="$1"
+    day=$((seconds / 86400))
+    hor=$(( (seconds % 86400) / 3600 ))
+    min=$(( (seconds % 3600) / 60 ))
+    sec=$((seconds % 60))
+
+    if [[ $day -gt 0 ]]; then echo -n "${day}d"; fi
+    if [[ $hor -gt 0 ]]; then echo -n "${hor}h"; fi
+    if [[ $min -gt 0 ]]; then echo -n "${min}m"; fi
+    if [[ $sec -gt 0 ]]; then echo -n "${sec}s"; fi
+}
+
+function usage_exit {
+    echo >&2 "usage: ${0##*/} <minutes> Cmd..."
+    echo >&2 "       ${0##*/} 1 ls /"
+    echo >&2 "       ${0##*/} 0.5 ls /"
+    exit 1
+}
+
+min="$1"
+shift
+
+if [[ -z "$min" || ! "$min" =~ ^[0-9\.]+$ ]]; then
+    usage_exit
+fi
+
+hash="$(md5sum <<< "$USER:$*" | awk '{print $1}')"
+flag="/tmp/run-once-with-$hash"
+
+if [ ! -f "$flag" ] || find "$flag" -mmin +"$min" | grep -q .; then
+    "$@" && touch "$flag"
+else
+    timediff=$(( $(date +%s) - $(stat -c %Y "$flag") ))
+    echo >&2 "'$*' has run $(sec2str $timediff) ago."
+fi
