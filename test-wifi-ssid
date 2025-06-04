@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+iface="$1"
+ssid="$2"
+
+if [[ -z "$iface" || -z "$ssid" ]]; then
+    echo >&2 "usage: ${0##*/} IFACE SSID"
+    exit 1
+fi
+
+networksetup -getairportnetwork "$iface" | awk '{print $NF}' | grep -q -w "$ssid"
+

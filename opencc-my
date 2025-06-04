@@ -1,0 +1,5 @@
+#!/bin/sh
+
+opencc | sed \
+    -e 's/爲/為/g' \
+    -e 's/纔/才/g'
