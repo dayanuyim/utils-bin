@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+function get_ssid {
+    #networksetup -getairportnetwork "$1" | awk '{print $NF}'
+    system_profiler -json SPAirPortDataType | \
+        jq -r ".SPAirPortDataType[].spairport_airport_interfaces[] | \
+            select(._name == \"$1\") | \
+            .spairport_current_network_information._name"
+}
+
 iface="$1"
 ssid="$2"
 
@@ -8,5 +16,5 @@ if [[ -z "$iface" || -z "$ssid" ]]; then
     exit 1
 fi
 
-networksetup -getairportnetwork "$iface" | awk '{print $NF}' | grep -q -w "$ssid"
+get_ssid "$iface" | grep -q -w "$ssid"
 
