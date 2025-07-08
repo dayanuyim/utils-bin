@@ -6,8 +6,10 @@
 
 source "$HOME/bin/libs.sh"
 
-PREFIX1=/Volumes/bulk/Movie
-PREFIX2=/Volumes/bulk/Drama
+PREFIXES=(
+    /Volumes/bulk/Movie
+    /Volumes/bulk
+)
 MOV_LST="$HOME/Dropbox/Doc_文件/movies.lst"
 
 #================================================================================
@@ -173,17 +175,29 @@ function infer_name {
         s@(.*)\.\(?(19|20)([0-9]{2})\)?(\..*|$)@\1.${title}.\2\3@"
 }
 
+function remove_prefix {
+    local sed_script=
+    for prefix in "${PREFIXES[@]}"; do
+        sed_script+="s#^$prefix/##;"
+    done
+    sed -e "$sed_script"
+}
+
 function flash_inv {
-    local lst="$MOV_LST"
     if [[ "$1" == "--dry-run" ]]; then
-        lst="/dev/null"
         shift
+        local lst="/dev/null"
+    else
+        local lst="$MOV_LST"
     fi
 
     declare -n inv=$1
 
     print_bar
-    printf '%s\n' "${inv[@]}" | sed -e 's#^'$PREFIX1/'##' -e 's#^'$PREFIX2/'##' | tee -a "$lst" | nl -n rz -w2 -s'  '
+    printf '%s\n' "${inv[@]}" \
+        | remove_prefix \
+        | tee -a "$lst" \
+        | nl -n rz -w2 -s'  '
 }
 
 function run

@@ -66,7 +66,7 @@ function ask_yesno {
     esac
 
     while true; do
-        read -r -p "${c_blueB}${b_lightgray}==> $prompt ($defstr)?${c_end} " ans
+        read -r -p "${c_redB}${b_lightgray}==> $prompt ($defstr)?${c_end} " ans
         if [[ -z "$ans" ]]; then
             ans="$def"
         fi
