@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 
-function get_ssid {
-    #networksetup -getairportnetwork "$1" | awk '{print $NF}'
+function get_ssid_before_macos_12 {
+    networksetup -getairportnetwork "$1" | awk '{print $NF}'
+}
+
+function get_ssid_before_macos_15_6 {
     system_profiler -json SPAirPortDataType | \
         jq -r ".SPAirPortDataType[].spairport_airport_interfaces[] | \
             select(._name == \"$1\") | \
             .spairport_current_network_information._name"
+}
+
+function get_ssid {
+    sudo ipconfig setverbose 1
+    ipconfig getsummary en0 |grep ' SSID : ' | awk '{print $3}'
 }
 
 iface="$1"

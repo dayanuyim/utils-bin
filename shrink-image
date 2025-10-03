@@ -6,6 +6,7 @@ function get_scale
     h=${1#*x}
     v=$((w < h? w: h))
     case "$v" in
+        3000) echo 25.000000%;;
         2160) echo 33.333333%;;
         1536) echo 50.000000%;;
         *)    return 1;;

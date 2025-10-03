@@ -5,6 +5,6 @@ orig="${target}.orig"
 
 cmd="shrink-image"
 
-mv "$target" "$orig" && \
-    mirror "$cmd" "$orig" "$target" && \
-    trash "$orig"
+mv "$target" "$orig" \
+    && mirror "$cmd" "$orig" "$target" \
+#    && trash "$orig"

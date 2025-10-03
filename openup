@@ -27,14 +27,22 @@ function windows_open {
     cd "$dir" && explorer "$file"
 }
 
-case "$(uname)" in
-    Darwin)
-        /usr/bin/open "$@"
-        ;;
-    Linux)
-        /usr/bin/open "$@"
-        ;;
-    *)
-        windows_open "$@"
-        ;;
-esac
+function _open {
+    case "$(uname)" in
+        Darwin)
+            /usr/bin/open "$@"
+            ;;
+        Linux)
+            /usr/bin/open "$@"
+            ;;
+        *)
+            windows_open "$@"
+            ;;
+    esac
+}
+
+if [[ -z "$*" ]]; then
+    arg="$(cat)"
+    set "$arg"
+fi
+_open "$@"
