@@ -42,7 +42,6 @@ function _open {
 }
 
 if [[ -z "$*" ]]; then
-    arg="$(cat)"
-    set "$arg"
+    set "$(cat)"
 fi
 _open "$@"
