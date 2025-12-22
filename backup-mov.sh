@@ -15,8 +15,8 @@ MOV_LST="$HOME/Dropbox/Doc_文件/movies.lst"
 #================================================================================
 
 function errmsg_exit {
-    echo "$1" >&2
-    echo "usage: ${0##*/} lst" >&2
+    echo >&2 "$1"
+    echo >&2 "usage: ${0##*/} lst"
     exit 1
 }
 
@@ -52,10 +52,10 @@ function mv_subtitles {
     local video="$(find "$dir" -size +100M -type f)"
     local count="$(wc -l <<<"$video" | xargs)"
     if [[ "$count" != 1 ]]; then
-        >&2 echo "error: cannot identify the video file"
+        echo >&2 "error: cannot identify the video file"
     else
         video="${video##*/}"
-        >&2 echo "[+] video file: $video"
+        echo >&2 "[+] video file: $video"
 
         # flaten subtitle files
         local basename="${video%.*}"
@@ -83,18 +83,25 @@ function settle_mov {
         dryrun=1 && shift
     fi
 
+    local init=1
+    if [[ $1 == "--no-init" ]]; then
+        init=  && shift
+    fi
+
     local src="${1%/}"
     local dst="${2%/}"
 
     if [[ -z $dryrun && ! -d "$src" ]]; then
-        >&2 echo "settle_mov: No source folder '$src'."
+        echo >&2 "settle_mov: No source folder '$src'."
         return 1
     fi
 
     if [[ -z $dryrun ]]; then
-        rm_meta_files "$src"
-        mv_subtitles "$src"
-        mv -v "$src" "$dst"
+        if [[ -n "$init" ]]; then
+            rm_meta_files "$src"
+            mv_subtitles "$src"
+        fi
+        mv -n -v "$src" "$dst"
     else
         echo "mv $src -> $dst"
     fi
@@ -104,12 +111,12 @@ function settle_mov {
 function copy_mov
 {
     if [[ -z $Src ]]; then
-        echo "error: no source folder specified" >&2
+        echo >&2 "error: no source folder specified"
         exit 2
     fi
 
     if [[ -z $Dst ]]; then
-        echo "error: no destination folder specified" >&2
+        echo >&2 "error: no destination folder specified"
         exit 2
     fi
 
@@ -122,19 +129,25 @@ function copy_mov
     local new_mov="$2"
     declare -n inv=$3
 
-    if rsync -avhP $flag \
-        --exclude='.*' \
-        --exclude='.DS_Store' \
-        --exclude='~uTorrent*.dat' \
-        --exclude='RARBG*' \
-        --exclude='YIFY*.txt' \
-        --exclude='*YTS*.jpg' \
-        "$Src/$mov" "$Dst/" ;
-    then
-        local res="$(settle_mov $flag "$Dst/$mov" "$Dst/$new_mov")"
-        echo "${c_blueB}$res${c_end}"
-        inv+=("$Dst/$new_mov")
+    if [[ -n "$KEEP_SRC" ]]; then
+        rsync -avhP $flag \
+            --exclude='.*' \
+            --exclude='.DS_Store' \
+            --exclude='~uTorrent*.dat' \
+            --exclude='RARBG*' \
+            --exclude='YIFY*.txt' \
+            --exclude='*YTS*.jpg' \
+            "$Src/$mov" "$Dst/" ;
+        ec=$?
+        if [[ $ec -ne 0 ]]; then return $ec; fi
+
+        local res="$(settle_mov $flag           "$Dst/$mov" "$Dst/$new_mov")"
+    else
+        local res="$(settle_mov $flag --no-init "$Src/$mov" "$Dst/$new_mov")"
     fi
+
+    echo "${c_blueB}$res${c_end}"
+    inv+=("$Dst/$new_mov")
 }
 
 function infer_name {
@@ -216,7 +229,11 @@ function run
         case "$line" in
             "" | "#"*)
                 ;;
+            "<< "*) Src="${line:3}"
+                KEEP_SRC=
+                ;;
             "< "*) Src="${line:2}"
+                KEEP_SRC=1
                 ;;
             "> "*) Dst="${line:2}"
                 ;;
@@ -234,15 +251,18 @@ function run
                     sn="${sn}."
                 fi
 
-                if [[ "$title" == =* ]]; then
+                # infer the new movie name
+                if [[ "$title" == "=" ]]; then                     # no change
+                    new_mov="${sn}${mov}"
+                elif [[ "$title" == =* ]]; then                    # just assign
                     new_mov="${sn}${title:1}"
                 else
-                    new_mov="${sn}$(infer_name "$mov" "$title" "$sn")"
+                    new_mov="${sn}$(infer_name "$mov" "$title")"   # to inder
                 fi
 
                 print_bar
-                #echo "${c_greenB}$(printf "#%03d   %-100s %-3s %-30s" "$cnt" "$mov" "$sn" "$title" )${c_end}"
                 echo "${c_greenB}$(printf "#%03d   %-90s %-30s" "$cnt" "$mov" "$new_mov")${c_end}"
+                #echo "${c_greenB}$(LC_ALL=C.UTF-8 gawk '{ printf "#%03d   %-90s %s", $1, $2, $3 }' <<< "$cnt $mov $new_mov")${c_end}"
 
                 copy_mov $flag "$mov" "$new_mov" inventory
 
