@@ -1,0 +1,108 @@
+#!/usr/bin/env node
+
+/**
+ * Usage:
+ *   node lookup-ubuntu-cve.js <url> <packageName>
+ *
+ * Example:
+ *   node lookup-ubuntu-cve.js https://ubuntu.com/security/CVE-XXXX-YYYY linux-nvidia
+ */
+
+const path = require('path');
+const [, app, cve, pkg] = process.argv;
+
+/* 移除 HTML tag，正規化空白 */
+function stripHtml(input) {
+  return input
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function printTable(tbl, sp='  ')
+{
+    if (tbl.length <= 0){
+        console.error('not data');
+        return;
+    }
+
+    const col_widths = new Array(tbl[0].length).fill(0);
+    for (const row of tbl)
+        for(let i = 0; i < row.length; ++i)
+            col_widths[i] = Math.max(col_widths[i], row[i].length);
+
+    tbl.forEach(row =>
+        console.log(row
+            .map((cell, i) => cell.padEnd(col_widths[i], ' '))
+            .join(sp)
+        )
+    );
+}
+
+if (!cve || !pkg) {
+  console.error(`Usage: node ${path.basename(app)} <cve> <packageName>`);
+  process.exit(1);
+}
+
+const url = `https://ubuntu.com/security/${cve.toUpperCase()}`;
+
+(async () => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+
+  const html = await res.text();
+
+  /* 1. 取出 <table class="cve-table"> */
+  const tableMatch = html.match(
+    /<table[^>]*class=["'][^"']*\bcve-table\b[^"']*["'][\s\S]*?<\/table>/i
+  );
+  if (!tableMatch) {
+    throw new Error('table.cve-table not found');
+  }
+
+  /* 2. 拆成每一列 <tr> */
+  const rows = tableMatch[0].match(/<tr[\s\S]*?<\/tr>/gi) || [];
+
+  let curr_pkg = null;
+
+  const data = [];
+  for (const tr of rows) {
+    /*
+     * 一個 <tr> 可能是：
+     *   A) <th rowspan="N">pkg</th> <td>...</td> <td>...</td>
+     *   B) <td>...</td> <td>...</td>  （pkg 來自上一列的 rowspan）
+     */
+
+    const th = tr.match(/<th[^>]*>([\s\S]*?)<\/th>/i);
+    const tds = [...tr.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)];
+
+    /* Case A：這一列有 package（th） */
+    if (th) {
+      curr_pkg = stripHtml(th[1]);
+    }
+
+    /* Case B：沒有 th，但仍在 rowspan 範圍內 */
+    if (!curr_pkg) {
+      continue;
+    }
+
+    /* 過濾指定 package */
+    if (curr_pkg !== pkg)
+      continue;
+
+    let rowCells = [ curr_pkg ];
+    for (const td of tds) {
+      rowCells.push(stripHtml(td[1]));
+    }
+
+    data.push(rowCells);
+  }
+
+  printTable(data);
+
+})().catch(err => {
+  console.error(err.message);
+  process.exit(1);
+});

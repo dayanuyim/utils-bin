@@ -1,0 +1,96 @@
+#!/usr/bin/env node
+
+/*
+ * Install:
+ *   npm install jsdom
+ *
+ */
+
+const { JSDOM } = require('jsdom');
+const path = require('path');
+
+/* 移除 HTML tag，正規化空白 */
+function stripHtml(input) {
+  return input
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function printTable(tbl, sp='  ')
+{
+    if (tbl.length <= 0){
+        console.error('not data');
+        return;
+    }
+
+    const col_widths = new Array(tbl[0].length).fill(0);
+    for (const row of tbl)
+        for(let i = 0; i < row.length; ++i)
+            col_widths[i] = Math.max(col_widths[i], row[i].length);
+
+    tbl.forEach(row =>
+        console.log(row
+            .map((cell, i) => cell.padEnd(col_widths[i], ' '))
+            .join(sp)
+        )
+    );
+}
+
+async function main() {
+  const [, app, cve, pkg] = process.argv;
+
+  if (!cve || !pkg) {
+    console.error(`Usage: node ${path.basename(app)} <cve> <packageName>`);
+    process.exit(1);
+  }
+  const url = `https://ubuntu.com/security/${cve.toUpperCase()}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch URL: ${res.status}`);
+  }
+
+  const html = await res.text();
+  const dom = new JSDOM(html);
+  const document = dom.window.document;
+
+  const table = document.querySelector('table.cve-table');
+  if (!table) {
+    throw new Error('Table with class "cve-table" not found');
+  }
+
+  let curr_pkg = null;
+
+  const data = [];
+  for (const tr of table.querySelectorAll('tbody tr')) {
+    const cells = Array.from(tr.children); // th + td
+
+    /*
+     * Case 1:
+     *   <th rowspan="N">package</th> <td>...</td> <td>...</td>
+     */
+    if (cells[0].tagName === 'TH') {
+      curr_pkg = stripHtml(cells.shift().textContent);
+    }
+
+    if (!curr_pkg) continue;
+    if (curr_pkg !== pkg) continue;
+
+    /*
+     * Case 2:
+     *   <td>...</td> <td>...</td>
+     *   (package comes from previous rowspan TH)
+     */
+    const cell_texts = [curr_pkg, ...cells.map(c => stripHtml(c.textContent))];
+    data.push(cell_texts);
+  }
+
+  printTable(data);
+}
+
+main().catch(err => {
+  console.error(err.message);
+  process.exit(1);
+});
+
