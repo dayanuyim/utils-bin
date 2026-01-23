@@ -35,8 +35,9 @@ function rm_meta_files {
     find "$dir" \( -name '.DS_Store' -or \
                    -name '~uTorrent*.dat' -or \
                    -name 'RARBG*' -or \
-                   -name 'YIYF*.txt' -or \
-                   -name 'YTS*.txt' -or \
+                   -name '*YIYF*.txt' -or \
+                   -name '*YIYF*.jpg' -or \
+                   -name '*YTS*.txt' -or \
                    -name '*YTS*.jpg' \
                 \) -delete
     find "$dir" -type f -name '.*' -exec sh -c 'if file "{}" | grep -q AppleDouble; then rm "{}"; fi' \;
@@ -135,7 +136,9 @@ function copy_mov
             --exclude='.DS_Store' \
             --exclude='~uTorrent*.dat' \
             --exclude='RARBG*' \
-            --exclude='YIFY*.txt' \
+            --exclude='*YIFY*.txt' \
+            --exclude='*YIFY*.jpg' \
+            --exclude='*YTS*.txt' \
             --exclude='*YTS*.jpg' \
             "$Src/$mov" "$Dst/" ;
         ec=$?
@@ -171,7 +174,7 @@ function infer_name {
     # Exclude Prepositions
     # Insert TITLE and Trim anyting after the year -------
     gsed <<< "$name" -E "\
-        s@${sp}@.@g; \
+        s@${sp}+@.@g; \
         s@['\"]@@g; \
         s@(.*)@\L\1@; \
         s@(\.|^)([a-z])@\1\U\2@g; \

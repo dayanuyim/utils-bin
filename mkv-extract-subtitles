@@ -19,15 +19,16 @@ if [[ -z $mkvfile ]]; then
 fi
 
 mkvmerge -F json -i "$mkvfile" | \
-    jq -c -r '.tracks[] | [.id, .type, .codec, .properties.track_name] | join(":")' | \
-    while IFS=':' read -r id _type codec name;
+    jq -c -r '.tracks[] | [.id, .type, .codec, .properties.track_name, .properties.language] | join(":")' | \
+    while IFS=':' read -r id _type codec name lang;
     do
-        echo -ne '\033[32m'"$id, $_type, $codec, $name"'\033[0m' >&2
+        echo -ne '\033[32m'"$id, $_type, $codec, $name, $lang"'\033[0m' >&2
 
         if [[ "$_type" == "subtitles" ]]; then
             echo "" >&2
             ext="$(fileext "$codec")"
-            mkvextract tracks "$mkvfile" "$id:${id}_${name}.$ext"
+            fname="${id}${name:+_$name}${lang:+.$lang}.$ext"
+            mkvextract tracks "$mkvfile" "$id:$fname"
         else
             echo "...skip" >&2
         fi

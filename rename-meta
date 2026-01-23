@@ -1,0 +1,52 @@
+#!/bin/bash
+
+DRY_RUN=
+TAG=
+
+function rename_by_tag {
+    local file="$1"
+
+    # check file exists
+    if [[ ! -e "$file" ]]; then
+        echo >&2 "The file '$file' does not exist"
+        exit 2
+    fi
+
+    # get tag value and check it exists
+    val="$(exiftool -"$TAG" -s3 "$file" | head -n1)"
+    if [[ -z "$val" ]]; then
+        echo >&2 "the file '$file' has no metadata '$TAG'"
+        exit 3
+    fi
+
+    # coin the new file path
+    local dir="$(dirname "$file")"
+    local ext="${file##*.}"
+    local file2="$dir/$val${ext:+.$ext}"
+
+    # rename or dry run
+    if [[ -n "$DRY_RUN" ]]; then
+        echo >&2 "The file '$file' would be renamed to '$file2'"
+    else
+        mv -v "$file" "$file2"
+    fi
+}
+
+if [[ "$1" == "-n" || "$1" == "--dry-run" ]]; then
+    DRY_RUN=1
+    shift
+fi
+
+# check tag exists
+TAG="$1"
+shift
+if [[ -z "$TAG" ]]; then
+    echo >&2 "usage: ${0##*/} [-n|--dry-run] <MetadataTag> [File...>"
+    exit 1
+fi
+
+for file in "$@"; do
+    rename_by_tag "$file"
+done
+
+
