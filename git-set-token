@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+function sed {
+    if uname -a | grep -q Darwin; then
+        command gsed "$@"
+    else
+        command sed "$@"
+    fi
+}
+
+if [[ ! -v 1 ]]; then
+    echo >&2 "usage: ${0##*/} <token>"
+    echo >&2 "       (set token to the empty string for removing it)"
+    exit 1
+fi
+
+# append '@' to a non-empty token if needed
+token="$1"
+if [[ -n "$token" && "$token" != *@ ]]; then
+    token="${token}@"
+fi
+
+git remote -v | awk '{print $1, $2}' | sort -u | while read -r source url; do
+#                   |(scheme )(  token  )?(path)|
+    newurl="$(sed 's|\(.*://\)\([^@]*@\)\?\(.*\)|\1'$token'\3|' <<< "$url")"
+    git remote set-url "$source" "$newurl"
+done
+
+git remote -v
