@@ -8,14 +8,9 @@ function sed {
     fi
 }
 
-if [[ ! -v 1 ]]; then
-    echo >&2 "usage: ${0##*/} <token>"
-    echo >&2 "       (set token to the empty string for removing it)"
-    exit 1
-fi
+read -p "Enter token (empty for removing): " token
 
 # append '@' to a non-empty token if needed
-token="$1"
 if [[ -n "$token" && "$token" != *@ ]]; then
     token="${token}@"
 fi
