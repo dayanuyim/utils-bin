@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-src="${1%/}"
-dst="$2"
+dst="$1"
+src="${2%/}"
 if [[ -z $src || -z $dst ]]; then
-    >&2 echo "usage: $(basename "$0") <src-folder> <dst-iso>"
+    >&2 echo "usage: $(basename "$0") <dst-iso> <src-folder>"
     exit 1
 fi
 

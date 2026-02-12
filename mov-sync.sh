@@ -47,4 +47,10 @@ if [[ ! -d "$dstdir" ]]; then
     exit 3
 fi
 
-rsync --remove-source-files -avhP "$srcdir"/ "$dstdir"/
+
+echo >&2 "sync '$srcdir/' to '$dstdir/'"
+rsync -avhP \
+    --remove-source-files \
+    --exclude='.*' \
+    --exclude='.DS_Store' \
+    "$srcdir"/ "$dstdir"/
