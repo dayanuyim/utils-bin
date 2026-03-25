@@ -16,9 +16,11 @@ if [[ -n "$token" && "$token" != *@ ]]; then
 fi
 
 git remote -v | awk '{print $1, $2}' | sort -u | while read -r source url; do
-#                   |(scheme )(  token  )?(path)|
-    newurl="$(sed 's|\(.*://\)\([^@]*@\)\?\(.*\)|\1'$token'\3|' <<< "$url")"
-    git remote set-url "$source" "$newurl"
+#                                           |(  scheme  )(  token  )?(path)|
+    read -r scheme old_token path < <(sed 's|\([^:]*://\)\([^@]*@\)\?\(.*\)|\1 \2 \3|' <<< "$url")
+    if [[ "$old_token" == "${token:0:3}"* ]]; then       # only replace those with the same prefix
+        git remote set-url "$source" "${scheme}${token}${path}"
+    fi
 done
 
 git remote -v
