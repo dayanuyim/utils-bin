@@ -58,6 +58,7 @@ c_whiteB=$'\e[1;97m'
 function ask_yesno {
     prompt="$1"
     def="$2"
+    timeout="${3:-60}"
 
     case "$def" in
         [Nn]* ) defstr="y/N";;
@@ -66,10 +67,19 @@ function ask_yesno {
     esac
 
     while true; do
-        read -r -p "${c_redB}${b_lightgray}==> $prompt ($defstr)?${c_end} " ans
+        read -r -p "${c_redB}${b_lightgray}==> $prompt ($defstr)?${c_end} " -t "$timeout" ans
+        ec=$?
+        if [[ $ec != 0 ]]; then
+            if [[ $ec > 128 ]]; then msg="timeout ($ec)"; else msg="($ec)"; fi
+            echo >&2 "${c_lightgray}fail to read: $msg${c_end}"
+            return 2
+        fi
+
+        # emtpy ans means default
         if [[ -z "$ans" ]]; then
             ans="$def"
         fi
+
         case "$ans" in
             [Nn]* ) return 1;;
             [Yy]* ) return 0;;
