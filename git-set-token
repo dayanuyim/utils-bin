@@ -8,6 +8,10 @@ function sed {
     fi
 }
 
+if [[ "$1" == "-f" || "$1" == "--force" ]]; then
+    force=1
+fi
+
 read -p "Enter token (empty for removing): " token
 
 # append '@' to a non-empty token if needed
@@ -17,8 +21,8 @@ fi
 
 git remote -v | awk '{print $1, $2}' | sort -u | while read -r source url; do
 #                                           |(  scheme  )(  token  )?(path)|
-    read -r scheme old_token path < <(sed 's|\([^:]*://\)\([^@]*@\)\?\(.*\)|\1 \2 \3|' <<< "$url")
-    if [[ "$old_token" == "${token:0:3}"* ]]; then       # only replace those with the same prefix
+    IFS=, read -r scheme old_token path < <(sed 's|\([^:]*://\)\([^@]*@\)\?\(.*\)|\1,\2,\3|' <<< "$url")
+    if [[ -n "$force" || "$old_token" == "${token:0:3}"* ]]; then       # only replace those with the same prefix
         git remote set-url "$source" "${scheme}${token}${path}"
     fi
 done
