@@ -1,0 +1,84 @@
+#!/bin/bash
+
+##############################################################
+# Parse a credential file with the fromat:
+#    USER:PASS:HASH
+# The PASS could contain seperator ':'
+##############################################################
+
+function usage {
+    echo >&2 "usage: ${0##*/} [--if-pass|--if-hash] <credential-file>"
+    echo >&2 "use cases:"
+    echo >&2 "       user-of cred.lst"
+    echo >&2 "       user-of cred.lst --if-pass"
+    echo >&2 "       user-of cred.lst --if-hash"
+    echo >&2 "       user-of cred.lst --if-null"
+    echo >&2 "       pass-of cred.lst"
+    echo >&2 "       hash-of cred.lst"
+}
+
+function user-of {
+    #v="${1%%:*}"
+    #echo -n "$v"
+    awk '{printf $2}' <<< "$1"
+}
+
+function pass-of {
+    #v="${1#*:}"                                 # trim user
+    #[[ "$v" == "$1" ]] && v= || v="${v%:*}"     # trim hash if pass exists
+    #echo -n "$v"
+    v="$(awk '{printf $3}' <<< "$1")"
+    if [[ "$v" == "-" ]]; then v=; fi
+    echo -n "$v"
+}
+
+function hash-of {
+    #v="${1#*:}"                                 # trim user
+    #w="${v#*:}"                                 # trim pass
+    #[[ "$v" == "$w" ]] && v= || v="${w##*:}"    # trim pass devastatingly if hash exists
+    #echo -n "$v"
+    awk '{printf $4}' <<< "$1"
+}
+
+function _cond {
+    if [ -n "$IF_PASS" ] && [ -z "$(pass-of "$1")" ]; then
+        return 1
+    fi
+    if [ -n "$IF_HASH" ] && [ -z "$(hash-of "$1")" ]; then
+        return 1
+    fi
+
+    if [ -n "$IF_NULL" ] && [ -n "$(pass-of "$1")$(hash-of "$1")" ]; then
+        return 1
+    fi
+    return 0
+}
+
+proc="${0##*/}"
+
+# parse options
+while [ $# -gt 0 ]; do
+    if [ "$1" == "--if-pass" ]; then
+        IF_PASS=1
+    elif [ "$1" == "--if-hash" ]; then
+        IF_HASH=1
+    elif [ "$1" == "--if-null" ]; then
+        IF_NULL=1
+    else
+        file="$1"
+    fi
+    shift
+done
+
+
+if [ ! -e "$file" ] ;then
+    usage
+    exit 1
+fi
+
+cat "$file" | while read -r cred; do
+    v="$($proc "$cred")"
+    if [ -n "$v" ] &&_cond "$cred"; then
+        echo "$v"
+    fi
+done

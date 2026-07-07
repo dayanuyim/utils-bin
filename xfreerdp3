@@ -1,0 +1,4 @@
+#!/bin/bash
+
+#exec /usr/bin/xfreerdp3 /cert:ignore /dynamic-resolution /drive:share,$HOME/share "$@"
+exec /usr/bin/xfreerdp3 /cert:ignore /dynamic-resolution "$@"
