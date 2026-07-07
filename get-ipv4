@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -o pipefail
+
+iface="${1:-eth0}"
+
+#ip addr show tun0 | grep "inet " | awk '{print $2}' | cut -d/ -f1
+addr=$(ip -color=never addr show "$iface" | sed -n 's#.*inet \(.*\)/.*#\1#p')
+ec=$?
+
+# Xfec Panel will show STDERR if no STDOUT. So just show a newline if failed.
+[ $ec -eq 0 ] && echo $addr || echo ""
+
+exit $ec

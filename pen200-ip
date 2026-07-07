@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [[ -z "$1" ]]; then
+    echo >&2 "usage ${0##*/} <host-num>"
+    exit 1
+fi
+
+network="$(ip route | grep 'via.*tun0' | cut -d'/' -f1)"
+echo "${network%.*}.$1"
+
